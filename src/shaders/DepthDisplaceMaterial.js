@@ -18,6 +18,11 @@ const vertexShader = /* glsl */`
   uniform int uMathMode;
   uniform float uMathAmp;
   uniform float uMathFreq;
+  uniform float uMathTimeScale;
+  uniform float uMathDetail;
+  uniform float uMathWarp;
+  uniform float uMathBlend;
+  uniform float uMathSymmetry;
 
   varying vec2 vUv;
   varying vec3 vWorldPos;
@@ -44,16 +49,41 @@ const vertexShader = /* glsl */`
   }
 
   float mathPattern(vec2 uv, float t) {
+    float time = t * uMathTimeScale;
     if (uMathMode == 1) {
-      float r = length(uv - 0.5);
-      return sin(r * uMathFreq * 6.28318 - t) * uMathAmp;
+      float r = length(uv - 0.5) + 1e-4;
+      float shaped = pow(r, max(0.2, uMathDetail));
+      return sin(shaped * uMathFreq * 6.28318 - time) * uMathAmp;
     } else if (uMathMode == 2) {
-      return sin((uv.x + uv.y * 0.2) * uMathFreq * 6.28318 + t) * uMathAmp;
+      float angle = atan(uv.y - 0.5, uv.x - 0.5);
+      float stripes = (uv.x + uv.y * 0.2) * uMathFreq * 6.28318;
+      stripes += sin(angle * (1.0 + uMathWarp)) * uMathBlend;
+      return sin(stripes + time) * uMathAmp;
     } else if (uMathMode == 3) {
       vec2 p = uv - 0.5;
-      float ang = atan(p.y, p.x) + t * 0.25;
-      float r = length(p);
-      return sin((ang + r) * uMathFreq * 3.14159) * uMathAmp;
+      float ang = atan(p.y, p.x) + time * 0.35;
+      float r = pow(length(p) + 1e-4, max(0.4, uMathDetail));
+      return sin((ang * (1.0 + uMathWarp) + r * (uMathFreq + 0.2)) + time) * uMathAmp;
+    } else if (uMathMode == 4) {
+      vec2 p = uv - 0.5;
+      float sectors = max(1.0, uMathSymmetry);
+      float angle = atan(p.y, p.x);
+      float radius = pow(length(p) + 1e-4, max(0.2, uMathDetail));
+      float mirrored = abs(fract((angle / 3.14159265) * sectors * 0.5) - 0.5) * 2.0;
+      float wave = sin((mirrored * (1.0 + uMathWarp) + radius * (uMathFreq + uMathBlend)) * 6.28318 + time);
+      return wave * uMathAmp;
+    } else if (uMathMode == 5) {
+      vec2 p = (uv - 0.5) * (1.0 + uMathWarp) + vec2(time * 0.08, -time * 0.05);
+      float amp = 1.0;
+      float freq = uMathFreq * 0.5 + 0.001;
+      float sum = 0.0;
+      for (int i = 0; i < 4; i++) {
+        float n = vnoise(p * (freq + float(i) * max(0.0, uMathBlend)) + vec2(time * 0.2 * float(i), time * 0.17 * float(3 - i)));
+        sum += (n - 0.5) * 2.0 * amp;
+        amp *= 0.55 + uMathDetail * 0.05;
+        freq *= 1.7;
+      }
+      return sum * uMathAmp * 0.7;
     }
     return 0.0;
   }
@@ -71,7 +101,7 @@ const vertexShader = /* glsl */`
 
   void main() {
     vUv = uv;
-    float t = uTime;
+  float t = uTime;
 
     float line = step(0.98, fract(vUv.y * 80.0 + t * 0.5));
     float jitter = (line > 0.5) ? (uJitter * (vnoise(vec2(vUv.y * 10.0, t)) - 0.5)) : 0.0;
@@ -121,10 +151,16 @@ const fragmentShader = /* glsl */`
   uniform float uSaturation;
   uniform float uHue;
   uniform vec3 uTint;
+  uniform float uOpacity;
 
   uniform int uMathMode;
   uniform float uMathAmp;
   uniform float uMathFreq;
+  uniform float uMathTimeScale;
+  uniform float uMathDetail;
+  uniform float uMathWarp;
+  uniform float uMathBlend;
+  uniform float uMathSymmetry;
 
   varying vec2 vUv;
   varying vec3 vWorldPos;
@@ -151,16 +187,41 @@ const fragmentShader = /* glsl */`
   }
 
   float mathPattern(vec2 uv, float t) {
+    float time = t * uMathTimeScale;
     if (uMathMode == 1) {
-      float r = length(uv - 0.5);
-      return sin(r * uMathFreq * 6.28318 - t) * uMathAmp;
+      float r = length(uv - 0.5) + 1e-4;
+      float shaped = pow(r, max(0.2, uMathDetail));
+      return sin(shaped * uMathFreq * 6.28318 - time) * uMathAmp;
     } else if (uMathMode == 2) {
-      return sin((uv.x + uv.y * 0.2) * uMathFreq * 6.28318 + t) * uMathAmp;
+      float angle = atan(uv.y - 0.5, uv.x - 0.5);
+      float stripes = (uv.x + uv.y * 0.2) * uMathFreq * 6.28318;
+      stripes += sin(angle * (1.0 + uMathWarp)) * uMathBlend;
+      return sin(stripes + time) * uMathAmp;
     } else if (uMathMode == 3) {
       vec2 p = uv - 0.5;
-      float ang = atan(p.y, p.x) + t * 0.25;
-      float r = length(p);
-      return sin((ang + r) * uMathFreq * 3.14159) * uMathAmp;
+      float ang = atan(p.y, p.x) + time * 0.35;
+      float r = pow(length(p) + 1e-4, max(0.4, uMathDetail));
+      return sin((ang * (1.0 + uMathWarp) + r * (uMathFreq + 0.2)) + time) * uMathAmp;
+    } else if (uMathMode == 4) {
+      vec2 p = uv - 0.5;
+      float sectors = max(1.0, uMathSymmetry);
+      float angle = atan(p.y, p.x);
+      float radius = pow(length(p) + 1e-4, max(0.2, uMathDetail));
+      float mirrored = abs(fract((angle / 3.14159265) * sectors * 0.5) - 0.5) * 2.0;
+      float wave = sin((mirrored * (1.0 + uMathWarp) + radius * (uMathFreq + uMathBlend)) * 6.28318 + time);
+      return wave * uMathAmp;
+    } else if (uMathMode == 5) {
+      vec2 p = (uv - 0.5) * (1.0 + uMathWarp) + vec2(time * 0.08, -time * 0.05);
+      float amp = 1.0;
+      float freq = uMathFreq * 0.5 + 0.001;
+      float sum = 0.0;
+      for (int i = 0; i < 4; i++) {
+        float n = vnoise(p * (freq + float(i) * max(0.0, uMathBlend)) + vec2(time * 0.2 * float(i), time * 0.17 * float(3 - i)));
+        sum += (n - 0.5) * 2.0 * amp;
+        amp *= 0.55 + uMathDetail * 0.05;
+        freq *= 1.7;
+      }
+      return sum * uMathAmp * 0.7;
     }
     return 0.0;
   }
@@ -239,7 +300,7 @@ const fragmentShader = /* glsl */`
     vec3 color = adjustColor(base);
     vec3 lighting = color * (uAmbient + diffDir + diffPt) + (spec1 * uLightColor + spec2 * uPointLightColor);
 
-    gl_FragColor = vec4(lighting, 1.0);
+    gl_FragColor = vec4(lighting, uOpacity);
   }
 `
 
@@ -278,10 +339,16 @@ const DepthDisplaceMaterial = shaderMaterial(
     uSaturation: 1.0,
     uHue: 0.0,
     uTint: [1, 1, 1],
+  uOpacity: 1.0,
 
     uMathMode: 1,
     uMathAmp: 0.05,
-    uMathFreq: 6.0
+    uMathFreq: 6.0,
+    uMathTimeScale: 1.0,
+    uMathDetail: 1.0,
+    uMathWarp: 0.0,
+    uMathBlend: 0.5,
+    uMathSymmetry: 6.0
   },
   vertexShader,
   fragmentShader

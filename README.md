@@ -6,10 +6,11 @@ Depth Studio is a React + Vite experience for turning a flat image and its grays
 
 - Image + depth upload pipeline with automatic GPU displacement and live normal estimation
 - Directional + point lights, specular highlights, and ambient fill
-- Post-processing stack: bloom, chromatic aberration, vignette, glitch, film grain, and depth of field
+- Post-processing stack: bloom, chromatic aberration, vignette, glitch, film grain, and depth of field (now with audio-reactive depth-of-field boosts)
 - Motion system with mouse parallax, auto-orbit camera rig, animated noise jitter, and “Wow Mode” showcase preset
-- Math-driven displacement layers (ripples, stripes, swirl) to enhance or stylize depth
-- Clean Leva UI grouped by Effects, Scene, Depth, Lighting, Color, Animation, and Math Edit panels
+- Math-driven displacement layers with ripples, stripes, swirl, kaleidoscope, and fractal noise options plus fine-grained time/detail controls
+- Expanded audio analysis with smoothed low/mid/high energy detection driving bloom, color, lighting, math deformation, and camera depth pulses
+- Refined Leva UI with Master, Visual FX, Environment, Performance, Audio, Surface, and Layers panels for quicker navigation
 
 ## Getting Started
 
