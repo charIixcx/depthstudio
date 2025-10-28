@@ -6,6 +6,7 @@ import * as THREE from 'three'
 import { useControls, button, folder, levaStore } from 'leva'
 import { BlendFunction, GlitchMode } from 'postprocessing'
 import DepthSurface from './DepthSurface.jsx'
+import ASCIIEffect from './ASCIIEffect.jsx'
 import audioBus from '../lib/audioBus'
 import { createEffectsController } from '../lib/audioMapper'
 
@@ -132,9 +133,12 @@ export default function Scene({ colorURL, depthURL }) {
     vignette: { value: 0.45, min: 0, max: 1, step: 0.01 },
     glitch: { value: 0.0, min: 0, max: 1, step: 0.01 },
     filmGrain: { value: 0.15, min: 0, max: 1, step: 0.01 },
-    dof: { value: 0.0, min: 0, max: 1, step: 0.01 }
+    dof: { value: 0.0, min: 0, max: 1, step: 0.01 },
+    asciiMode: { value: false, label: 'ASCII Mode' },
+    asciiCellSize: { value: 8.0, min: 4, max: 24, step: 1, label: 'ASCII Cell Size' },
+    asciiDepth: { value: 0.5, min: 0, max: 1, step: 0.01, label: 'ASCII Depth Influence' }
   })
-  const { bloom, chroma, vignette, glitch, filmGrain, dof } = visualFx
+  const { bloom, chroma, vignette, glitch, filmGrain, dof, asciiMode, asciiCellSize, asciiDepth } = visualFx
 
   const { background, envIntensity, orbit } = useControls('Environment', {
     background: { value: '#0b0d12', label: 'Background' },
@@ -214,6 +218,8 @@ export default function Scene({ colorURL, depthURL }) {
       pointColor: { value: '#a4b2ff', label: 'Fill Color' },
       pointIntensity: { value: 0.8, min: 0, max: 8, step: 0.01, label: 'Fill Intensity' },
       pointPos: { value: { x: 0.7, y: 0.6, z: 0.8 }, label: 'Fill Position' },
+      animateLights: { value: false, label: 'Animate Lights' },
+      lightRotSpeed: { value: 0.5, min: 0, max: 2, step: 0.01, label: 'Rotation Speed' },
       specular: { value: 0.55, min: 0, max: 1, step: 0.01, label: 'Specular' },
       shininess: { value: 32, min: 1, max: 128, step: 1, label: 'Shininess' }
     }, { collapsed: true }),
@@ -231,7 +237,7 @@ export default function Scene({ colorURL, depthURL }) {
       jitter: { value: 0.02, min: 0, max: 0.2, step: 0.001, label: 'Jitter' }
     }),
     Deform: folder({
-      mode: { options: { None: 0, Ripples: 1, Stripes: 2, Swirl: 3, Kaleidoscope: 4, Fractal: 5 }, value: 1, label: 'Mode' },
+      mode: { options: { None: 0, Ripples: 1, Stripes: 2, Swirl: 3, Kaleidoscope: 4, Fractal: 5, 'Wave Interference': 6, Voronoi: 7, Particles: 8 }, value: 1, label: 'Mode' },
       mathAmp: { value: 0.05, min: 0, max: 0.5, step: 0.001, label: 'Deform Amp' },
       mathFreq: { value: 6.0, min: 0, max: 40, step: 0.1, label: 'Deform Freq' },
       timeScale: { value: 1.0, min: 0, max: 4, step: 0.01, label: 'Time Scale' },
@@ -370,6 +376,8 @@ export default function Scene({ colorURL, depthURL }) {
     pointColor,
     pointIntensity,
     pointPos,
+    animateLights,
+    lightRotSpeed,
     specular,
     shininess,
     brightness,
@@ -406,10 +414,12 @@ export default function Scene({ colorURL, depthURL }) {
       pointColor,
       pointIntensity,
       pointPos,
+      animateLights,
+      lightRotSpeed,
       specular,
       shininess
     }),
-    [ambient, directionalColor, directionalIntensity, directionalDir, pointColor, pointIntensity, pointPos, specular, shininess]
+    [ambient, directionalColor, directionalIntensity, directionalDir, pointColor, pointIntensity, pointPos, animateLights, lightRotSpeed, specular, shininess]
   )
 
   const colorSettings = useMemo(
@@ -660,7 +670,19 @@ export default function Scene({ colorURL, depthURL }) {
 
         <AudioCameraZ />
         <Rig orbit={orbit} zOffset={camZRef.current}>
-          {layersCtl.multiLayer ? (
+          {asciiMode ? (
+            <ASCIIEffect 
+              colorURL={colorURL}
+              depthURL={depthURL}
+              cellSize={asciiCellSize}
+              depthInfluence={asciiDepth}
+              invertDepth={invertDepth}
+              brightness={brightness}
+              contrast={contrast}
+              tint={tint}
+              enabled={true}
+            />
+          ) : layersCtl.multiLayer ? (
             (() => {
               const items = []
               const n = Math.max(1, Math.floor(layersCtl.count))
