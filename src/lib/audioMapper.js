@@ -43,8 +43,7 @@ export function createEffectsController({ controls = {}, base = {} } = {}) {
         chroma: state.base.chroma || 0,
         vignette: state.base.vignette || 0,
         filmGrain: state.base.filmGrain || 0,
-        glitch: state.base.glitch || 0,
-        dof: state.base.dof || 0
+        glitch: state.base.glitch || 0
       }
     }
 
@@ -82,10 +81,9 @@ export function createEffectsController({ controls = {}, base = {} } = {}) {
     const chroma = (state.base.chroma || 0) + shape(state.smoothed.treble) * (map.chromaMult || 0)
     const vignette = Math.max(0, (state.base.vignette || 0) + shape(state.smoothed.mid) * (map.vignetteMult || 0))
     const filmGrain = Math.max(0, (state.base.filmGrain || 0) + shape(state.smoothed.mid) * (map.filmGrainMult || 0))
-    const dof = Math.max(0, (state.base.dof || 0) + shape(state.smoothed.highMid) * (map.dofMult || 0))
     const glitch = Math.max(0, (state.base.glitch || 0) + state.boosts.glitch)
 
-    return { bloom, chroma, vignette, filmGrain, glitch, dof }
+    return { bloom, chroma, vignette, filmGrain, glitch }
   }
 
   return { setControls, setBase, onBeat, update }

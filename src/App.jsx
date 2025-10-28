@@ -21,23 +21,28 @@ export default function App() {
   }, [])
 
   useEffect(() => {
+    const url = colorURL
     return () => {
-      if (colorURL?.startsWith('blob:')) URL.revokeObjectURL(colorURL)
-      if (depthURL?.startsWith('blob:')) URL.revokeObjectURL(depthURL)
+      if (url?.startsWith('blob:')) URL.revokeObjectURL(url)
     }
-  }, [colorURL, depthURL])
+  }, [colorURL])
+
+  useEffect(() => {
+    const url = depthURL
+    return () => {
+      if (url?.startsWith('blob:')) URL.revokeObjectURL(url)
+    }
+  }, [depthURL])
 
   const onColorFile = (e) => {
     const f = e.target.files?.[0]
     if (!f) return
-    if (colorURL?.startsWith('blob:')) URL.revokeObjectURL(colorURL)
     setColorURL(URL.createObjectURL(f))
   }
 
   const onDepthFile = (e) => {
     const f = e.target.files?.[0]
     if (!f) return
-    if (depthURL?.startsWith('blob:')) URL.revokeObjectURL(depthURL)
     setDepthURL(URL.createObjectURL(f))
   }
 

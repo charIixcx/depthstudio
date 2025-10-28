@@ -222,49 +222,6 @@ const fragmentShader = /* glsl */`
     vec2 u = f * f * (3.0 - 2.0 * f);
     return mix(a, b, u.x) + (c - a) * u.y * (1.0 - u.x) + (d - b) * u.x * u.y;
   }
-    } else if (uMathMode == 6) {
-      // Wave Interference - multiple wave sources creating interference patterns
-      vec2 p = uv - 0.5;
-      float d1 = length(p - vec2(cos(time * 0.3) * 0.3, sin(time * 0.3) * 0.3));
-      float d2 = length(p - vec2(-cos(time * 0.4) * 0.25, -sin(time * 0.5) * 0.25));
-      float d3 = length(p - vec2(sin(time * 0.35) * 0.2, cos(time * 0.45) * 0.2));
-      float wave1 = sin(d1 * uMathFreq * 6.28318 - time * 2.0);
-      float wave2 = sin(d2 * uMathFreq * 6.28318 - time * 2.5);
-      float wave3 = sin(d3 * uMathFreq * 6.28318 - time * 3.0);
-      return ((wave1 + wave2 + wave3) / 3.0) * uMathAmp * (1.0 + uMathWarp * 0.5);
-    } else if (uMathMode == 7) {
-      // Voronoi-like cellular pattern
-      vec2 p = uv * uMathFreq;
-      vec2 i = floor(p);
-      vec2 f = fract(p);
-      float minDist = 1.0;
-      for (int y = -1; y <= 1; y++) {
-        for (int x = -1; x <= 1; x++) {
-          vec2 neighbor = vec2(float(x), float(y));
-          vec2 point = vec2(hash(i + neighbor), hash(i + neighbor + vec2(13.7, 27.3)));
-          point = 0.5 + 0.5 * sin(time * uMathTimeScale + 6.2831 * point);
-          vec2 diff = neighbor + point - f;
-          float dist = length(diff);
-          minDist = min(minDist, dist);
-        }
-      }
-      float pattern = sin(minDist * 6.28318 * (1.0 + uMathWarp * 2.0) + time);
-      return pattern * uMathAmp * (1.0 + uMathDetail * 0.5);
-    } else if (uMathMode == 8) {
-      // Particle field displacement
-      vec2 p = uv - 0.5;
-      float pattern = 0.0;
-      int particleCount = int(mix(4.0, 12.0, uMathDetail));
-      for (int i = 0; i < 12; i++) {
-        if (i >= particleCount) break;
-        float fi = float(i);
-        float angle = time * (0.3 + fi * 0.1) + fi * 2.0;
-        float radius = 0.15 + sin(time * 0.5 + fi) * 0.1;
-        vec2 particlePos = vec2(cos(angle), sin(angle)) * radius * (1.0 + uMathWarp);
-        float dist = length(p - particlePos);
-        pattern += (1.0 / (dist * uMathFreq * 10.0 + 1.0)) * uMathBlend;
-      }
-      return sin(pattern * 3.14159) * uMathAmp;
 
   float sampleDepth(vec2 uv) {
     float d = texture2D(uDepthMap, uv).r;
@@ -308,6 +265,49 @@ const fragmentShader = /* glsl */`
         freq *= 1.7;
       }
       return sum * uMathAmp * 0.7;
+    } else if (uMathMode == 6) {
+      // Wave Interference - multiple wave sources creating interference patterns
+      vec2 p = uv - 0.5;
+      float d1 = length(p - vec2(cos(time * 0.3) * 0.3, sin(time * 0.3) * 0.3));
+      float d2 = length(p - vec2(-cos(time * 0.4) * 0.25, -sin(time * 0.5) * 0.25));
+      float d3 = length(p - vec2(sin(time * 0.35) * 0.2, cos(time * 0.45) * 0.2));
+      float wave1 = sin(d1 * uMathFreq * 6.28318 - time * 2.0);
+      float wave2 = sin(d2 * uMathFreq * 6.28318 - time * 2.5);
+      float wave3 = sin(d3 * uMathFreq * 6.28318 - time * 3.0);
+      return ((wave1 + wave2 + wave3) / 3.0) * uMathAmp * (1.0 + uMathWarp * 0.5);
+    } else if (uMathMode == 7) {
+      // Voronoi-like cellular pattern
+      vec2 p = uv * uMathFreq;
+      vec2 i = floor(p);
+      vec2 f = fract(p);
+      float minDist = 1.0;
+      for (int y = -1; y <= 1; y++) {
+        for (int x = -1; x <= 1; x++) {
+          vec2 neighbor = vec2(float(x), float(y));
+          vec2 point = vec2(hash(i + neighbor), hash(i + neighbor + vec2(13.7, 27.3)));
+          point = 0.5 + 0.5 * sin(time * uMathTimeScale + 6.2831 * point);
+          vec2 diff = neighbor + point - f;
+          float dist = length(diff);
+          minDist = min(minDist, dist);
+        }
+      }
+      float pattern = sin(minDist * 6.28318 * (1.0 + uMathWarp * 2.0) + time);
+      return pattern * uMathAmp * (1.0 + uMathDetail * 0.5);
+    } else if (uMathMode == 8) {
+      // Particle field displacement
+      vec2 p = uv - 0.5;
+      float pattern = 0.0;
+      int particleCount = int(mix(4.0, 12.0, uMathDetail));
+      for (int i = 0; i < 12; i++) {
+        if (i >= particleCount) break;
+        float fi = float(i);
+        float angle = time * (0.3 + fi * 0.1) + fi * 2.0;
+        float radius = 0.15 + sin(time * 0.5 + fi) * 0.1;
+        vec2 particlePos = vec2(cos(angle), sin(angle)) * radius * (1.0 + uMathWarp);
+        float dist = length(p - particlePos);
+        pattern += (1.0 / (dist * uMathFreq * 10.0 + 1.0)) * uMathBlend;
+      }
+      return sin(pattern * 3.14159) * uMathAmp;
     }
     return 0.0;
   }

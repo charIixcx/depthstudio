@@ -1,7 +1,7 @@
 import React, { Suspense, useMemo, useRef, useEffect, useState } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { OrbitControls, Environment, Stats } from '@react-three/drei'
-import { EffectComposer, Bloom, ChromaticAberration, Vignette, Glitch, Noise, DepthOfField, SMAA, SSAO } from '@react-three/postprocessing'
+import { EffectComposer, Bloom, ChromaticAberration, Vignette, Glitch, Noise, SMAA } from '@react-three/postprocessing'
 import * as THREE from 'three'
 import { useControls, button, folder, levaStore } from 'leva'
 import { BlendFunction, GlitchMode } from 'postprocessing'
@@ -40,7 +40,7 @@ export default function Scene({ colorURL, depthURL }) {
   // Simple preset catalog focused on effects/perf and material base values
   const PRESETS = {
     Default: {
-      effects: { bloom: 0.9, chroma: 0.006, vignette: 0.45, filmGrain: 0.15, glitch: 0, dof: 0.0 },
+      effects: { bloom: 0.9, chroma: 0.006, vignette: 0.45, filmGrain: 0.15, glitch: 0 },
       material: {
         noiseAmp: 0.02,
         depthScale: 0.25,
@@ -59,7 +59,7 @@ export default function Scene({ colorURL, depthURL }) {
       }
     },
     Cinematic: {
-      effects: { bloom: 1.2, chroma: 0.003, vignette: 0.6, filmGrain: 0.2, glitch: 0, dof: 0.35 },
+      effects: { bloom: 1.2, chroma: 0.003, vignette: 0.6, filmGrain: 0.2, glitch: 0 },
       material: {
         noiseAmp: 0.015,
         depthScale: 0.22,
@@ -78,7 +78,7 @@ export default function Scene({ colorURL, depthURL }) {
       }
     },
     Dreamy: {
-      effects: { bloom: 1.6, chroma: 0.008, vignette: 0.35, filmGrain: 0.1, glitch: 0, dof: 0.25 },
+      effects: { bloom: 1.6, chroma: 0.008, vignette: 0.35, filmGrain: 0.1, glitch: 0 },
       material: {
         noiseAmp: 0.03,
         depthScale: 0.18,
@@ -97,7 +97,7 @@ export default function Scene({ colorURL, depthURL }) {
       }
     },
     Aggressive: {
-      effects: { bloom: 0.8, chroma: 0.012, vignette: 0.5, filmGrain: 0.25, glitch: 0.2, dof: 0.15 },
+      effects: { bloom: 0.8, chroma: 0.012, vignette: 0.5, filmGrain: 0.25, glitch: 0.2 },
       material: {
         noiseAmp: 0.04,
         depthScale: 0.3,
@@ -133,12 +133,11 @@ export default function Scene({ colorURL, depthURL }) {
     vignette: { value: 0.45, min: 0, max: 1, step: 0.01 },
     glitch: { value: 0.0, min: 0, max: 1, step: 0.01 },
     filmGrain: { value: 0.15, min: 0, max: 1, step: 0.01 },
-    dof: { value: 0.0, min: 0, max: 1, step: 0.01 },
     asciiMode: { value: false, label: 'ASCII Mode' },
     asciiCellSize: { value: 8.0, min: 4, max: 24, step: 1, label: 'ASCII Cell Size' },
     asciiDepth: { value: 0.5, min: 0, max: 1, step: 0.01, label: 'ASCII Depth Influence' }
   })
-  const { bloom, chroma, vignette, glitch, filmGrain, dof, asciiMode, asciiCellSize, asciiDepth } = visualFx
+  const { bloom, chroma, vignette, glitch, filmGrain, asciiMode, asciiCellSize, asciiDepth } = visualFx
 
   const { background, envIntensity, orbit } = useControls('Environment', {
     background: { value: '#0b0d12', label: 'Background' },
@@ -153,8 +152,7 @@ export default function Scene({ colorURL, depthURL }) {
     maxDpr: { value: 1.75, min: 1, max: 3, step: 0.05, label: 'Max DPR' },
     postScale: { value: 0.9, min: 0.5, max: 1.0, step: 0.01, label: 'Post Scale' },
     antialias: { value: false, label: 'Hardware AA' },
-    smaa: { value: true, label: 'SMAA' },
-    ssao: { value: false, label: 'SSAO (WebGL2)' }
+    smaa: { value: true, label: 'SMAA' }
   })
 
   const audio = useControls('Audio', {
@@ -170,8 +168,7 @@ export default function Scene({ colorURL, depthURL }) {
       chromaMult: { value: 0.01, min: -0.05, max: 0.05, step: 0.001, label: 'Chromatic Shift' },
       vignetteMult: { value: 0.35, min: 0, max: 1, step: 0.01, label: 'Vignette Boost' },
       filmGrainMult: { value: 0.35, min: 0, max: 2, step: 0.01, label: 'Grain Boost' },
-      glitchMult: { value: 1.0, min: 0, max: 4, step: 0.05, label: 'Glitch Boost' },
-      dofMult: { value: 0.35, min: 0, max: 2, step: 0.01, label: 'DOF Boost' }
+      glitchMult: { value: 1.0, min: 0, max: 4, step: 0.05, label: 'Glitch Boost' }
     }),
     Camera: folder({
       camEnabled: { value: false, label: 'Enable Camera' },
@@ -262,7 +259,6 @@ export default function Scene({ colorURL, depthURL }) {
     vignetteMult,
     filmGrainMult,
     glitchMult,
-    dofMult,
     camEnabled: rawCamEnabled,
     camZBase,
     camZRange,
@@ -299,10 +295,9 @@ export default function Scene({ colorURL, depthURL }) {
       chromaMult,
       vignetteMult,
       filmGrainMult,
-      glitchMult,
-      dofMult
+      glitchMult
     }),
-    [audioEnabled, audioSensitivity, audioThreshold, audioPower, audioSmoothing, bloomMult, chromaMult, vignetteMult, filmGrainMult, glitchMult, dofMult]
+    [audioEnabled, audioSensitivity, audioThreshold, audioPower, audioSmoothing, bloomMult, chromaMult, vignetteMult, filmGrainMult, glitchMult]
   )
 
   const materialAudio = useMemo(
@@ -462,18 +457,16 @@ export default function Scene({ colorURL, depthURL }) {
     chroma,
     vignette,
     filmGrain,
-    glitch: 0,
-    dof
+    glitch: 0
   }))
 
   const chromaOffset = useMemo(() => [chroma, 0], [chroma])
-  const dofAmount = effectsState.dof ?? dof
 
   // audio controller that centralizes smoothing and beat boosts
-  const controllerRef = useRef(createEffectsController({ controls: effectsAudio, base: { bloom, chroma, vignette, filmGrain, glitch, dof } }))
+  const controllerRef = useRef(createEffectsController({ controls: effectsAudio, base: { bloom, chroma, vignette, filmGrain, glitch } }))
   // keep controller mapping and base values in sync with controls
   useEffect(() => controllerRef.current.setControls(effectsAudio), [effectsAudio])
-  useEffect(() => controllerRef.current.setBase({ bloom, chroma, vignette, filmGrain, glitch, dof }), [bloom, chroma, vignette, filmGrain, glitch, dof])
+  useEffect(() => controllerRef.current.setBase({ bloom, chroma, vignette, filmGrain, glitch }), [bloom, chroma, vignette, filmGrain, glitch])
 
   // forward beat events to the controller (controller will keep internal boosts)
   useEffect(() => {
@@ -505,7 +498,7 @@ export default function Scene({ colorURL, depthURL }) {
       // throttle to ~20-30 FPS
       if (now - lastRef.current < 40) return
       lastRef.current = now
-  setEffectsState({ bloom: dyn.bloom, chroma: dyn.chroma, vignette: dyn.vignette, filmGrain: dyn.filmGrain, glitch: dyn.glitch, dof: dyn.dof })
+  setEffectsState({ bloom: dyn.bloom, chroma: dyn.chroma, vignette: dyn.vignette, filmGrain: dyn.filmGrain, glitch: dyn.glitch })
     })
     return null
   }
@@ -544,8 +537,6 @@ export default function Scene({ colorURL, depthURL }) {
     return null
   }
 
-  const [canSSAO, setCanSSAO] = useState(false)
-
   function applyPreset(name) {
     const p = PRESETS[name] || PRESETS.Default
     // Override post effects values via effectsState (these feed the effects)
@@ -554,8 +545,7 @@ export default function Scene({ colorURL, depthURL }) {
       chroma: p.effects.chroma,
       vignette: p.effects.vignette,
       filmGrain: p.effects.filmGrain,
-      glitch: p.effects.glitch,
-      dof: p.effects.dof ?? 0
+      glitch: p.effects.glitch
     })
     // sync audio-driven effect base values
     try {
@@ -564,8 +554,7 @@ export default function Scene({ colorURL, depthURL }) {
         chroma: p.effects.chroma,
         vignette: p.effects.vignette,
         filmGrain: p.effects.filmGrain,
-        glitch: p.effects.glitch,
-        dof: p.effects.dof ?? 0
+        glitch: p.effects.glitch
       })
     } catch {}
 
@@ -586,9 +575,8 @@ export default function Scene({ colorURL, depthURL }) {
   setPath('Visual FX.bloom', p.effects.bloom)
   setPath('Visual FX.chroma', p.effects.chroma)
   setPath('Visual FX.vignette', p.effects.vignette)
-      setPath('Visual FX.filmGrain', p.effects.filmGrain)
-      setPath('Visual FX.glitch', p.effects.glitch)
-      setPath('Visual FX.dof', p.effects.dof ?? 0)
+  setPath('Visual FX.filmGrain', p.effects.filmGrain)
+  setPath('Visual FX.glitch', p.effects.glitch)
   // Material-related sliders mapped into Surface folders
   setPath('Surface.Motion.noiseAmp', p.material.noiseAmp)
   setPath('Surface.Depth.depthScale', p.material.depthScale)
@@ -654,7 +642,6 @@ export default function Scene({ colorURL, depthURL }) {
       dpr={[1, 2]}
       onCreated={({ gl }) => {
         gl.setClearColor(background)
-        setCanSSAO(!!gl.capabilities.isWebGL2)
       }}
     >
   {showStats && <Stats showPanel={0} />}
@@ -734,12 +721,7 @@ export default function Scene({ colorURL, depthURL }) {
         />
         {/* If hardware AA is off, apply lightweight SMAA */}
         {perf.smaa && !perf.antialias && <SMAA />}
-        {/* Optional SSAO to enhance depth cues (WebGL2 only) */}
-        {perf.ssao && canSSAO && (
-          <SSAO samples={8} rings={4} radius={0.15} intensity={12} distanceThreshold={0.3} distanceFalloff={0.6} />
-        )}
-  <Noise premultiply blendFunction={BlendFunction.ADD} opacity={effectsState.filmGrain ?? filmGrain} />
-  {dofAmount > 0.001 && <DepthOfField focusDistance={0.01} focalLength={0.02 + dofAmount * 0.05} bokehScale={2 + dofAmount * 8} />}
+        <Noise premultiply blendFunction={BlendFunction.ADD} opacity={effectsState.filmGrain ?? filmGrain} />
       </EffectComposer>
       <EffectsUpdater />
     </Canvas>
