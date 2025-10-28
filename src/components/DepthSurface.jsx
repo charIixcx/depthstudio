@@ -148,15 +148,40 @@ export default function DepthSurface({
   }, [])
 
   // memoized lighting/color values so we don't allocate on every render
-  const uLightDirVal = useMemo(() => [lighting.directionalDir.x, lighting.directionalDir.y, lighting.directionalDir.z], [lighting.directionalDir.x, lighting.directionalDir.y, lighting.directionalDir.z])
+  const uLightDirRef = useRef([lighting.directionalDir.x, lighting.directionalDir.y, lighting.directionalDir.z])
+  const uPointLightPosRef = useRef([lighting.pointPos.x, lighting.pointPos.y, lighting.pointPos.z])
   const uLightColorVal = useMemo(() => new THREE.Color(lighting.directionalColor), [lighting.directionalColor])
-  const uPointLightPosVal = useMemo(() => [lighting.pointPos.x, lighting.pointPos.y, lighting.pointPos.z], [lighting.pointPos.x, lighting.pointPos.y, lighting.pointPos.z])
   const uPointLightColorVal = useMemo(() => new THREE.Color(lighting.pointColor), [lighting.pointColor])
   const uTintVal = useMemo(() => new THREE.Color(colorFx.tint), [colorFx.tint])
 
   useFrame((state, dt) => {
     if (!matRef.current) return
     matRef.current.uTime += dt
+
+    // Animate lights if enabled
+    if (lighting.animateLights) {
+      const t = state.clock.elapsedTime * (lighting.lightRotSpeed || 0.5)
+      // Rotate directional light around the scene
+      uLightDirRef.current[0] = Math.cos(t) * -0.7
+      uLightDirRef.current[2] = Math.sin(t) * 0.7
+      matRef.current.uLightDir = uLightDirRef.current
+      
+      // Orbit point light
+      uPointLightPosRef.current[0] = Math.cos(t * 1.3) * 0.7
+      uPointLightPosRef.current[2] = Math.sin(t * 1.3) * 0.8
+      matRef.current.uPointLightPos = uPointLightPosRef.current
+    } else {
+      // Use static positions from controls
+      uLightDirRef.current[0] = lighting.directionalDir.x
+      uLightDirRef.current[1] = lighting.directionalDir.y
+      uLightDirRef.current[2] = lighting.directionalDir.z
+      matRef.current.uLightDir = uLightDirRef.current
+      
+      uPointLightPosRef.current[0] = lighting.pointPos.x
+      uPointLightPosRef.current[1] = lighting.pointPos.y
+      uPointLightPosRef.current[2] = lighting.pointPos.z
+      matRef.current.uPointLightPos = uPointLightPosRef.current
+    }
 
     // existing wow-mode animation
     if (wowMode) {
@@ -214,10 +239,10 @@ export default function DepthSurface({
         uDepthBias={depth.depthBias}
         uNormalStrength={depth.normalStrength}
   uAmbient={lighting.ambient}
-  uLightDir={uLightDirVal}
+  uLightDir={uLightDirRef.current}
   uLightColor={uLightColorVal}
   uLightIntensity={lighting.directionalIntensity}
-  uPointLightPos={uPointLightPosVal}
+  uPointLightPos={uPointLightPosRef.current}
   uPointLightColor={uPointLightColorVal}
         uPointLightIntensity={lighting.pointIntensity}
         uSpecular={lighting.specular}
