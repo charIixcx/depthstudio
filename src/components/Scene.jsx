@@ -445,9 +445,6 @@ export default function Scene({ colorURL, depthURL }) {
     [depthSettings, lightingSettings, colorSettings, animationSettings, mathSettings, qualitySettings, materialAudio]
   )
 
-  const chromaOffset = useMemo(() => [chroma, 0], [chroma])
-  const dofAmount = effectsState.dof ?? dof
-
   // effects state — updated at a limited rate from EffectsUpdater to keep
   // re-renders manageable and avoid passing refs into the effect components
   const [effectsState, setEffectsState] = useState(() => ({
@@ -458,6 +455,9 @@ export default function Scene({ colorURL, depthURL }) {
     glitch: 0,
     dof
   }))
+
+  const chromaOffset = useMemo(() => [chroma, 0], [chroma])
+  const dofAmount = effectsState.dof ?? dof
 
   // audio controller that centralizes smoothing and beat boosts
   const controllerRef = useRef(createEffectsController({ controls: effectsAudio, base: { bloom, chroma, vignette, filmGrain, glitch, dof } }))
