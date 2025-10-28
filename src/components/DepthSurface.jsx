@@ -65,14 +65,51 @@ export default function DepthSurface({
   qualitySettings,
   audioSettings
 }) {
+  // Don't render if images are not provided
+  if (!colorURL || !depthURL) return null
+
+  return (
+    <DepthSurfaceImpl
+      colorURL={colorURL}
+      depthURL={depthURL}
+      wowMode={wowMode}
+      depthScaleMult={depthScaleMult}
+      opacity={opacity}
+      transparent={transparent}
+      depthSettings={depthSettings}
+      lightingSettings={lightingSettings}
+      colorSettings={colorSettings}
+      animationSettings={animationSettings}
+      mathSettings={mathSettings}
+      qualitySettings={qualitySettings}
+      audioSettings={audioSettings}
+    />
+  )
+}
+
+function DepthSurfaceImpl({
+  colorURL,
+  depthURL,
+  wowMode,
+  depthScaleMult,
+  opacity,
+  transparent,
+  depthSettings,
+  lightingSettings,
+  colorSettings,
+  animationSettings,
+  mathSettings,
+  qualitySettings,
+  audioSettings
+}) {
   const meshRef = useRef()
   const matRef = useRef()
   const { gl } = useThree()
 
-  const colorTex = useLoader(THREE.TextureLoader, colorURL || `${import.meta.env.BASE_URL}placeholder-color.png`, (loader) => {
+  const colorTex = useLoader(THREE.TextureLoader, colorURL, (loader) => {
     loader.setCrossOrigin('anonymous')
   })
-  const depthTex = useLoader(THREE.TextureLoader, depthURL || `${import.meta.env.BASE_URL}placeholder-depth.png`, (loader) => {
+  const depthTex = useLoader(THREE.TextureLoader, depthURL, (loader) => {
     loader.setCrossOrigin('anonymous')
   })
 

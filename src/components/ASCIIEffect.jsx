@@ -14,14 +14,41 @@ export default function ASCIIEffect({
   tint = '#ffffff',
   enabled = false
 }) {
+  // Don't render if images are not provided or not enabled
+  if (!colorURL || !depthURL || !enabled) return null
+
+  return (
+    <ASCIIEffectImpl
+      colorURL={colorURL}
+      depthURL={depthURL}
+      cellSize={cellSize}
+      depthInfluence={depthInfluence}
+      invertDepth={invertDepth}
+      brightness={brightness}
+      contrast={contrast}
+      tint={tint}
+    />
+  )
+}
+
+function ASCIIEffectImpl({
+  colorURL,
+  depthURL,
+  cellSize,
+  depthInfluence,
+  invertDepth,
+  brightness,
+  contrast,
+  tint
+}) {
   const meshRef = useRef()
   const matRef = useRef()
-  const { gl, size } = useThree()
+  const { size } = useThree()
 
-  const colorTex = useLoader(THREE.TextureLoader, colorURL || `${import.meta.env.BASE_URL}placeholder-color.png`, (loader) => {
+  const colorTex = useLoader(THREE.TextureLoader, colorURL, (loader) => {
     loader.setCrossOrigin('anonymous')
   })
-  const depthTex = useLoader(THREE.TextureLoader, depthURL || `${import.meta.env.BASE_URL}placeholder-depth.png`, (loader) => {
+  const depthTex = useLoader(THREE.TextureLoader, depthURL, (loader) => {
     loader.setCrossOrigin('anonymous')
   })
 
@@ -48,8 +75,6 @@ export default function ASCIIEffect({
     matRef.current.uTime += dt
     matRef.current.uResolution = resolution
   })
-
-  if (!enabled) return null
 
   return (
     <mesh ref={meshRef} position={[0, 0, 0]}>
