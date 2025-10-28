@@ -44,6 +44,31 @@ npm run build
 
 The production build emits to `dist/`. Large bundle warnings are expected because post-processing operators ship with sizeable GLSL payloads.
 
+## Deploy to GitHub Pages
+
+This project is configured for automatic deployment to GitHub Pages.
+
+### Automatic Deployment
+
+The repository includes a GitHub Actions workflow that automatically builds and deploys the app to GitHub Pages whenever changes are pushed to the `main` branch.
+
+**Setup Steps:**
+1. Go to your repository's Settings → Pages
+2. Under "Build and deployment", set Source to "GitHub Actions"
+3. Push to the `main` branch - the deployment will happen automatically
+
+The app will be available at `https://yourusername.github.io/depthstudio/`
+
+### Manual Deployment
+
+You can also deploy manually using the deploy script:
+
+```bash
+npm run deploy
+```
+
+This builds the app and pushes it to the `gh-pages` branch.
+
 ## Tech Stack
 
 - React + Vite
