@@ -69,10 +69,10 @@ export default function DepthSurface({
   const matRef = useRef()
   const { gl } = useThree()
 
-  const colorTex = useLoader(THREE.TextureLoader, colorURL || '/placeholder-color.png', (loader) => {
+  const colorTex = useLoader(THREE.TextureLoader, colorURL || `${import.meta.env.BASE_URL}placeholder-color.png`, (loader) => {
     loader.setCrossOrigin('anonymous')
   })
-  const depthTex = useLoader(THREE.TextureLoader, depthURL || '/placeholder-depth.png', (loader) => {
+  const depthTex = useLoader(THREE.TextureLoader, depthURL || `${import.meta.env.BASE_URL}placeholder-depth.png`, (loader) => {
     loader.setCrossOrigin('anonymous')
   })
 
