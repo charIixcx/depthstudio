@@ -87,7 +87,6 @@ Enable in the Surface → Lighting panel:
 - Bloom, glitch, and depth of field can be performance heavy; dial them down when targeting lower-end hardware.
 - Try different **Deform modes** with varying **Warp** and **Detail** values for unique effects.
 - ASCII mode works best with high-contrast images and moderate depth influence (0.3-0.7).
-- Replace `public/placeholder-*.png` with your own defaults if desired.
 
 ## Build
 
