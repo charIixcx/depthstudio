@@ -1,68 +1,81 @@
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   line-height: 1.5;
   font-weight: 400;
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  /* Dracula-inspired color scheme */
+  --bg-dark: #282A36;
+  --bg-darker: #1E1F29;
+  --fg: #F8F8F2;
+  --selection: #44475A;
+  --comment: #6272A4;
+  --cyan: #8BE9FD;
+  --green: #50FA7B;
+  --orange: #FFB86C;
+  --pink: #FF79C6;
+  --purple: #BD93F9;
+  --red: #FF5555;
+  --yellow: #F1FA8C;
+
+  color-scheme: dark;
+  color: var(--fg);
+  background-color: var(--bg-darker);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
 }
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
   min-width: 320px;
   min-height: 100vh;
+  overflow: hidden;
+  background: linear-gradient(135deg, #1E1F29 0%, #282A36 100%);
 }
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
+/* Better focus indicators for accessibility */
+:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 2px;
 }
 
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+/* Selection styling */
+::selection {
+  background-color: var(--purple);
+  color: var(--fg);
 }
 
-@media (prefers-color-scheme: light) {
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Reduced motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
   :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
+    --bg-dark: #000000;
+    --fg: #FFFFFF;
   }
 }
+

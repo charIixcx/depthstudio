@@ -4,12 +4,48 @@ import { extend } from '@react-three/fiber'
 const vertexShader = /* glsl */`
   precision highp float;
 
+  uniform sampler2D uDepthMap;
+  uniform vec2 uTexelSize;
+  uniform int uInvertDepth;
+  uniform int uUse3D;
+  uniform float uDepthScale;
+  uniform float uTime;
+
   varying vec2 vUv;
   varying vec3 vWorldPos;
+  varying vec3 vNormal;
+
+  float sampleDepth(vec2 uv) {
+    float d = texture2D(uDepthMap, uv).r;
+    if (uInvertDepth == 1) d = 1.0 - d;
+    return d;
+  }
 
   void main() {
     vUv = uv;
-    vec4 world = modelMatrix * vec4(position, 1.0);
+    vec3 pos = position;
+    
+    if (uUse3D == 1) {
+      // Apply depth displacement
+      float depth = sampleDepth(uv);
+      float displacement = (depth - 0.5) * uDepthScale;
+      pos += normal * displacement;
+      
+      // Calculate normal from depth gradient for lighting
+      float epsx = uTexelSize.x;
+      float epsy = uTexelSize.y;
+      float hL = sampleDepth(uv - vec2(epsx, 0.0));
+      float hR = sampleDepth(uv + vec2(epsx, 0.0));
+      float hD = sampleDepth(uv - vec2(0.0, epsy));
+      float hU = sampleDepth(uv + vec2(0.0, epsy));
+      float dx = (hR - hL) * uDepthScale;
+      float dy = (hU - hD) * uDepthScale;
+      vNormal = normalize(vec3(-dx * 3.0, -dy * 3.0, 1.0));
+    } else {
+      vNormal = normal;
+    }
+    
+    vec4 world = modelMatrix * vec4(pos, 1.0);
     vWorldPos = world.xyz;
     gl_Position = projectionMatrix * viewMatrix * world;
   }
@@ -21,6 +57,7 @@ const fragmentShader = /* glsl */`
   uniform sampler2D uColorMap;
   uniform sampler2D uDepthMap;
   uniform vec2 uResolution;
+  uniform vec2 uTexelSize;
   uniform float uTime;
   uniform float uCellSize;
   uniform float uDepthInfluence;
@@ -28,9 +65,20 @@ const fragmentShader = /* glsl */`
   uniform float uBrightness;
   uniform float uContrast;
   uniform vec3 uTint;
+  uniform int uColorize;
+  uniform float uWaveAmp;
+  uniform float uJitter;
+  uniform int uUse3D;
+  uniform float uDepthScale;
 
   varying vec2 vUv;
   varying vec3 vWorldPos;
+  varying vec3 vNormal;
+
+  // Hash function for pseudo-random values
+  float hash(vec2 p) {
+    return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
+  }
 
   // ASCII character patterns stored as bit patterns
   // Each character is 8x8 grid compressed into floats
@@ -76,11 +124,31 @@ const fragmentShader = /* glsl */`
   }
 
   void main() {
+    // Add wave distortion
+    vec2 animUV = vUv;
+    if (uWaveAmp > 0.0) {
+      animUV.x += sin(vUv.y * 20.0 + uTime * 2.0) * uWaveAmp;
+      animUV.y += cos(vUv.x * 15.0 + uTime * 1.5) * uWaveAmp * 0.7;
+    }
+    
     // Calculate cell coordinates
-    vec2 pixelPos = vUv * uResolution;
+    vec2 pixelPos = animUV * uResolution;
     vec2 cellCoord = floor(pixelPos / uCellSize);
+    
+    // Add jitter to cell coordinates
+    if (uJitter > 0.0) {
+      float jitterX = (hash(cellCoord + vec2(uTime * 0.1)) - 0.5) * uJitter * uCellSize;
+      float jitterY = (hash(cellCoord + vec2(uTime * 0.13, 100.0)) - 0.5) * uJitter * uCellSize;
+      pixelPos.x += jitterX;
+      pixelPos.y += jitterY;
+      cellCoord = floor(pixelPos / uCellSize);
+    }
+    
     vec2 cellCenter = (cellCoord + 0.5) * uCellSize;
     vec2 cellUV = cellCenter / uResolution;
+    
+    // Clamp UV to valid range
+    cellUV = clamp(cellUV, 0.0, 1.0);
     
     // Sample color and depth at cell center
     vec3 color = texture2D(uColorMap, cellUV).rgb;
@@ -108,12 +176,21 @@ const fragmentShader = /* glsl */`
     // Sample character pattern
     float charMask = getCharPattern(charIndex, cellLocalPos);
     
-    // Apply color
-    vec3 finalColor = color * uTint * charMask;
+    // Apply color - use grayscale or original color based on uColorize
+    vec3 baseColor = uColorize == 1 ? color : vec3(brightness);
+    vec3 finalColor = baseColor * uTint * charMask;
     
-    // Add slight animation based on time and depth
-    float pulse = sin(uTime * 2.0 + depth * 10.0) * 0.05 + 0.95;
+    // Add subtle pulse animation based on depth
+    float pulse = sin(uTime * 1.5 + depth * 8.0) * 0.03 + 0.97;
     finalColor *= pulse;
+    
+    // Apply lighting in 3D mode
+    if (uUse3D == 1) {
+      vec3 lightDir = normalize(vec3(-0.5, 0.8, 0.6));
+      float ndotl = max(dot(vNormal, lightDir), 0.0);
+      float lighting = 0.6 + ndotl * 0.4;
+      finalColor *= lighting;
+    }
     
     gl_FragColor = vec4(finalColor, 1.0);
   }
@@ -130,7 +207,14 @@ const ASCIIMaterial = shaderMaterial(
     uInvertDepth: 0,
     uBrightness: 0.0,
     uContrast: 1.0,
-    uTint: [1, 1, 1]
+    uTint: [1, 1, 1],
+    uColorize: 1,
+    uWaveAmp: 0.02,
+    uJitter: 0.0,
+    uTexelSize: [1.0 / 1024.0, 1.0 / 1024.0],
+    uUse3D: 1,
+    uDepthScale: 0.15,
+    uJitter: 0.005
   },
   vertexShader,
   fragmentShader

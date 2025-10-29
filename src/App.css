@@ -1,42 +1,137 @@
+* {
+  box-sizing: border-box;
+}
+
 #root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+  width: 100vw;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+/* Canvas container */
+canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  touch-action: none;
 }
 
-@keyframes logo-spin {
+/* Custom scrollbar for preset panel */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(68, 71, 90, 0.3);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(98, 114, 164, 0.5);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(98, 114, 164, 0.7);
+}
+
+/* Button hover effects */
+button {
+  font-family: inherit;
+  transition: all 0.2s ease;
+}
+
+button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+button:active {
+  transform: translateY(0);
+}
+
+/* Prevent text selection on UI elements */
+button, label {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  /* Adjust file upload zones for mobile */
+  .animated-drop-zone {
+    padding: 12px 20px !important;
+    font-size: 12px !important;
+  }
+
+  /* Stack action buttons vertically on mobile */
+  div[style*="bottom: 20px; right: 20px"] {
+    flex-direction: column;
+    right: 10px !important;
+    bottom: 10px !important;
+  }
+
+  /* Make preset panel full width on mobile */
+  div[style*="max-width: 320px"] {
+    max-width: 90vw !important;
+    right: 5vw !important;
+  }
+
+  /* Adjust audio meter for mobile */
+  div[style*="bottom: 20px; left: 20px"] {
+    bottom: 10px !important;
+    left: 10px !important;
+    transform: scale(0.8);
+  }
+}
+
+/* Animations */
+@keyframes fadeIn {
   from {
-    transform: rotate(0deg);
+    opacity: 0;
+    transform: translateY(10px);
   }
   to {
-    transform: rotate(360deg);
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
   }
 }
 
-.card {
-  padding: 2em;
+/* Loading state */
+.loading {
+  animation: pulse 1.5s ease-in-out infinite;
 }
 
-.read-the-docs {
-  color: #888;
+/* Glassmorphism effect */
+.glass {
+  background: rgba(40, 42, 54, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(98, 114, 164, 0.3);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+/* Focus visible for accessibility */
+button:focus-visible {
+  outline: 2px solid #64C8FF;
+  outline-offset: 2px;
+}
+
+/* Print styles */
+@media print {
+  button, .animated-drop-zone, .audio-meter {
+    display: none !important;
+  }
 }
