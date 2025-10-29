@@ -4,7 +4,7 @@ import audioBus from '../lib/audioBus'
 // Simple audio analyzer that supports file playback and microphone input.
 // Calls `onUpdate` with a small object of summary values (volume, bass, mid, treble, beat)
 // at a throttled rate so the rest of the app can react without being flooded.
-export default function AudioAnalyzer({ onUpdate }) {
+export default function AudioAnalyzer({ onUpdate, onAudioData }) {
   const audioCtxRef = useRef(null)
   const analyserRef = useRef(null)
   const sourceRef = useRef(null)
@@ -319,6 +319,17 @@ export default function AudioAnalyzer({ onUpdate }) {
       audioBus.latest.fft = rawFftEnabled ? new Uint8Array(freqData) : freqData
       // store the current frame to compute flux next frame
       prevFreqRef.current.set(freqData)
+
+      // Pass audio data to parent for visual meter
+      if (onAudioData) {
+        onAudioData({
+          subBass: smoothBands.subBass,
+          bass: smoothBands.bass,
+          mid: smoothBands.mid,
+          treble: smoothBands.treble,
+          volume,
+        })
+      }
 
       // throttle external onUpdate callback (UI consumer) to a lower rate so the
       // rest of the React tree isn't re-rendered each frame.

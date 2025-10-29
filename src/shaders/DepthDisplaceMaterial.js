@@ -127,6 +127,85 @@ const vertexShader = /* glsl */`
         pattern += (1.0 / (dist * uMathFreq * 10.0 + 1.0)) * uMathBlend;
       }
       return sin(pattern * 3.14159) * uMathAmp;
+    } else if (uMathMode == 9) {
+      // Hexagon tiling pattern
+      vec2 p = uv * uMathFreq;
+      p.y += time * 0.2;
+      vec2 hex = vec2(p.x + p.y * 0.57735, p.y * 1.1547);
+      vec2 i = floor(hex);
+      vec2 f = fract(hex);
+      float h1 = hash(i);
+      float h2 = hash(i + vec2(1.0, 0.0));
+      float h3 = hash(i + vec2(0.0, 1.0));
+      float pattern = sin((h1 + h2 + h3) * 6.28318 + time * (1.0 + uMathWarp));
+      pattern += cos(length(f - 0.5) * uMathFreq * (1.0 + uMathBlend) - time);
+      return pattern * uMathAmp * 0.5;
+    } else if (uMathMode == 10) {
+      // Plasma effect
+      vec2 p = uv - 0.5;
+      float pattern = sin(p.x * uMathFreq * 10.0 + time);
+      pattern += sin(p.y * uMathFreq * 10.0 + time * 1.3);
+      pattern += sin((p.x + p.y) * uMathFreq * 8.0 + time * 0.7);
+      pattern += sin(sqrt(p.x * p.x + p.y * p.y) * uMathFreq * 12.0 + time * 1.5);
+      pattern *= (1.0 + uMathWarp);
+      pattern += sin(length(p) * uMathFreq * (1.0 + uMathBlend) * 15.0 - time * 2.0);
+      return pattern * uMathAmp * 0.2;
+    } else if (uMathMode == 11) {
+      // Flow field
+      vec2 p = uv * uMathFreq;
+      float angle = vnoise(p + time * 0.2) * 6.28318 * (1.0 + uMathWarp);
+      vec2 flow = vec2(cos(angle), sin(angle));
+      float pattern = vnoise(p + flow * uMathBlend + time * 0.3);
+      pattern += vnoise(p * 2.0 - flow * uMathBlend * 0.5 - time * 0.2) * 0.5;
+      return (pattern - 0.5) * 2.0 * uMathAmp;
+    } else if (uMathMode == 12) {
+      // Crystal structure
+      vec2 p = uv - 0.5;
+      float angle = atan(p.y, p.x);
+      float radius = length(p);
+      int sides = int(mix(3.0, 8.0, uMathSymmetry));
+      float segment = 6.28318 / float(sides);
+      float a = mod(angle + time * 0.3, segment) - segment * 0.5;
+      float crystal = abs(sin(a * float(sides) + radius * uMathFreq * 10.0));
+      crystal *= sin(radius * uMathFreq * (1.0 + uMathWarp) * 20.0 - time);
+      return crystal * uMathAmp * (1.0 + uMathBlend);
+    } else if (uMathMode == 13) {
+      // Helix/DNA spiral
+      vec2 p = uv - 0.5;
+      float angle = atan(p.y, p.x);
+      float radius = length(p);
+      float helixCount = max(1.0, uMathSymmetry);
+      float helix1 = sin(angle * helixCount + radius * uMathFreq * 15.0 - time * 2.0);
+      float helix2 = sin(angle * helixCount + radius * uMathFreq * 15.0 + time * 2.0 + 3.14159);
+      float spiral = max(helix1, helix2) * (1.0 + uMathWarp);
+      spiral *= (1.0 - smoothstep(0.0, 0.5, radius)) * (1.0 + uMathBlend);
+      return spiral * uMathAmp;
+    } else if (uMathMode == 14) {
+      // Foam/bubble pattern
+      vec2 p = uv * uMathFreq;
+      float pattern = 0.0;
+      for (int i = 0; i < 5; i++) {
+        float fi = float(i);
+        vec2 offset = vec2(sin(time * 0.3 + fi), cos(time * 0.4 + fi * 0.7)) * (1.0 + uMathWarp);
+        float dist = length(fract(p + offset + fi) - 0.5);
+        pattern += smoothstep(0.3, 0.2, dist) * (1.0 + uMathBlend);
+      }
+      return sin(pattern * 3.14159 + time) * uMathAmp;
+    } else if (uMathMode == 15) {
+      // Mandelbrot-inspired fractal
+      vec2 p = (uv - 0.5) * (2.5 + uMathWarp);
+      vec2 c = p + vec2(cos(time * 0.1), sin(time * 0.15)) * 0.3;
+      vec2 z = vec2(0.0);
+      float iterations = 0.0;
+      int maxIter = int(mix(8.0, 20.0, uMathDetail));
+      for (int i = 0; i < 20; i++) {
+        if (i >= maxIter) break;
+        if (dot(z, z) > 4.0) break;
+        z = vec2(z.x * z.x - z.y * z.y, 2.0 * z.x * z.y) + c * (1.0 + uMathBlend * 0.5);
+        iterations += 1.0;
+      }
+      float pattern = iterations / float(maxIter);
+      return sin(pattern * uMathFreq * 6.28318 + time) * uMathAmp;
     }
     return 0.0;
   }
@@ -308,6 +387,85 @@ const fragmentShader = /* glsl */`
         pattern += (1.0 / (dist * uMathFreq * 10.0 + 1.0)) * uMathBlend;
       }
       return sin(pattern * 3.14159) * uMathAmp;
+    } else if (uMathMode == 9) {
+      // Hexagon tiling pattern
+      vec2 p = uv * uMathFreq;
+      p.y += time * 0.2;
+      vec2 hex = vec2(p.x + p.y * 0.57735, p.y * 1.1547);
+      vec2 i = floor(hex);
+      vec2 f = fract(hex);
+      float h1 = hash(i);
+      float h2 = hash(i + vec2(1.0, 0.0));
+      float h3 = hash(i + vec2(0.0, 1.0));
+      float pattern = sin((h1 + h2 + h3) * 6.28318 + time * (1.0 + uMathWarp));
+      pattern += cos(length(f - 0.5) * uMathFreq * (1.0 + uMathBlend) - time);
+      return pattern * uMathAmp * 0.5;
+    } else if (uMathMode == 10) {
+      // Plasma effect
+      vec2 p = uv - 0.5;
+      float pattern = sin(p.x * uMathFreq * 10.0 + time);
+      pattern += sin(p.y * uMathFreq * 10.0 + time * 1.3);
+      pattern += sin((p.x + p.y) * uMathFreq * 8.0 + time * 0.7);
+      pattern += sin(sqrt(p.x * p.x + p.y * p.y) * uMathFreq * 12.0 + time * 1.5);
+      pattern *= (1.0 + uMathWarp);
+      pattern += sin(length(p) * uMathFreq * (1.0 + uMathBlend) * 15.0 - time * 2.0);
+      return pattern * uMathAmp * 0.2;
+    } else if (uMathMode == 11) {
+      // Flow field
+      vec2 p = uv * uMathFreq;
+      float angle = vnoise(p + time * 0.2) * 6.28318 * (1.0 + uMathWarp);
+      vec2 flow = vec2(cos(angle), sin(angle));
+      float pattern = vnoise(p + flow * uMathBlend + time * 0.3);
+      pattern += vnoise(p * 2.0 - flow * uMathBlend * 0.5 - time * 0.2) * 0.5;
+      return (pattern - 0.5) * 2.0 * uMathAmp;
+    } else if (uMathMode == 12) {
+      // Crystal structure
+      vec2 p = uv - 0.5;
+      float angle = atan(p.y, p.x);
+      float radius = length(p);
+      int sides = int(mix(3.0, 8.0, uMathSymmetry));
+      float segment = 6.28318 / float(sides);
+      float a = mod(angle + time * 0.3, segment) - segment * 0.5;
+      float crystal = abs(sin(a * float(sides) + radius * uMathFreq * 10.0));
+      crystal *= sin(radius * uMathFreq * (1.0 + uMathWarp) * 20.0 - time);
+      return crystal * uMathAmp * (1.0 + uMathBlend);
+    } else if (uMathMode == 13) {
+      // Helix/DNA spiral
+      vec2 p = uv - 0.5;
+      float angle = atan(p.y, p.x);
+      float radius = length(p);
+      float helixCount = max(1.0, uMathSymmetry);
+      float helix1 = sin(angle * helixCount + radius * uMathFreq * 15.0 - time * 2.0);
+      float helix2 = sin(angle * helixCount + radius * uMathFreq * 15.0 + time * 2.0 + 3.14159);
+      float spiral = max(helix1, helix2) * (1.0 + uMathWarp);
+      spiral *= (1.0 - smoothstep(0.0, 0.5, radius)) * (1.0 + uMathBlend);
+      return spiral * uMathAmp;
+    } else if (uMathMode == 14) {
+      // Foam/bubble pattern
+      vec2 p = uv * uMathFreq;
+      float pattern = 0.0;
+      for (int i = 0; i < 5; i++) {
+        float fi = float(i);
+        vec2 offset = vec2(sin(time * 0.3 + fi), cos(time * 0.4 + fi * 0.7)) * (1.0 + uMathWarp);
+        float dist = length(fract(p + offset + fi) - 0.5);
+        pattern += smoothstep(0.3, 0.2, dist) * (1.0 + uMathBlend);
+      }
+      return sin(pattern * 3.14159 + time) * uMathAmp;
+    } else if (uMathMode == 15) {
+      // Mandelbrot-inspired fractal
+      vec2 p = (uv - 0.5) * (2.5 + uMathWarp);
+      vec2 c = p + vec2(cos(time * 0.1), sin(time * 0.15)) * 0.3;
+      vec2 z = vec2(0.0);
+      float iterations = 0.0;
+      int maxIter = int(mix(8.0, 20.0, uMathDetail));
+      for (int i = 0; i < 20; i++) {
+        if (i >= maxIter) break;
+        if (dot(z, z) > 4.0) break;
+        z = vec2(z.x * z.x - z.y * z.y, 2.0 * z.x * z.y) + c * (1.0 + uMathBlend * 0.5);
+        iterations += 1.0;
+      }
+      float pattern = iterations / float(maxIter);
+      return sin(pattern * uMathFreq * 6.28318 + time) * uMathAmp;
     }
     return 0.0;
   }

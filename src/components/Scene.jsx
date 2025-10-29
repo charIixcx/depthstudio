@@ -1,7 +1,7 @@
 import React, { Suspense, useMemo, useRef, useEffect, useState } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { OrbitControls, Environment, Stats } from '@react-three/drei'
-import { EffectComposer, Bloom, ChromaticAberration, Vignette, Glitch, Noise, SMAA } from '@react-three/postprocessing'
+import { EffectComposer, Bloom, ChromaticAberration, Vignette, Glitch, Noise, SMAA, HueSaturation, BrightnessContrast, Pixelation, DotScreen, Scanline } from '@react-three/postprocessing'
 import * as THREE from 'three'
 import { useControls, button, folder, levaStore } from 'leva'
 import { BlendFunction, GlitchMode } from 'postprocessing'
@@ -9,8 +9,9 @@ import DepthSurface from './DepthSurface.jsx'
 import ASCIIEffect from './ASCIIEffect.jsx'
 import audioBus from '../lib/audioBus'
 import { createEffectsController } from '../lib/audioMapper'
+import { CAMERA_PRESETS } from '../lib/presets'
 
-function Rig({ children, parallax = 0.15, orbit = true, zOffset = 0 }) {
+function Rig({ children, parallax = 0.15, orbit = true, zOffset = 0, orbitSpeed = 0.15, cameraMode = 'orbit' }) {
   const group = useRef()
   const t = useRef(0)
   const { camera, pointer } = useThree()
@@ -23,9 +24,15 @@ function Rig({ children, parallax = 0.15, orbit = true, zOffset = 0 }) {
     group.current.rotation.y += (tx - group.current.rotation.y) * 0.07
     group.current.rotation.x += (ty - group.current.rotation.x) * 0.07
 
-    if (orbit) {
+    // Apply camera preset if available
+    const preset = CAMERA_PRESETS[cameraMode]
+    if (preset && preset.update) {
+      preset.update(camera, t.current, orbitSpeed)
+      camera.lookAt(0, 0, 0)
+    } else if (orbit) {
+      // Fallback to default orbit
       const r = 2.5
-      const s = t.current * 0.15
+      const s = t.current * orbitSpeed
       camera.position.x = Math.cos(s) * r
       camera.position.z = Math.sin(s) * r + zOffset
       camera.position.y = 0.7 + Math.sin(s * 0.8) * 0.15
@@ -36,7 +43,7 @@ function Rig({ children, parallax = 0.15, orbit = true, zOffset = 0 }) {
   return <group ref={group}>{children}</group>
 }
 
-export default function Scene({ colorURL, depthURL }) {
+export default function Scene({ colorURL, depthURL, onAudioData, cameraMode = 'orbit' }) {
   // Simple preset catalog focused on effects/perf and material base values
   const PRESETS = {
     Default: {
@@ -116,150 +123,112 @@ export default function Scene({ colorURL, depthURL }) {
       }
     }
   }
-  const master = useControls('Master', {
-    preset: { options: Object.keys(PRESETS), value: 'Default', label: 'Look' },
+  const master = useControls('🎨 Master', {
+    preset: { options: Object.keys(PRESETS), value: 'Default', label: '🎭 Preset Look' },
     Apply: button((get) => {
-      const name = get('Master.preset') || 'Default'
+      const name = get('🎨 Master.preset') || 'Default'
       applyPreset(name)
     }),
-    wowMode: { value: false, label: 'Wow Mode' },
-    showStats: { value: false, label: 'Show Stats' }
-  })
+    wowMode: { value: false, label: '✨ Wow Mode' },
+    showStats: { value: false, label: '📊 Show Stats' }
+  }, { collapsed: false, order: 0 })
   const { preset, wowMode, showStats } = master
 
-  const visualFx = useControls('Visual FX', {
-    bloom: { value: 0.9, min: 0, max: 2, step: 0.01 },
-    chroma: { value: 0.006, min: 0, max: 0.02, step: 0.001 },
-    vignette: { value: 0.45, min: 0, max: 1, step: 0.01 },
-    glitch: { value: 0.0, min: 0, max: 1, step: 0.01 },
-    filmGrain: { value: 0.15, min: 0, max: 1, step: 0.01 },
-    asciiMode: { value: false, label: 'ASCII Mode' },
-    asciiCellSize: { value: 8.0, min: 4, max: 24, step: 1, label: 'ASCII Cell Size' },
-    asciiDepth: { value: 0.5, min: 0, max: 1, step: 0.01, label: 'ASCII Depth Influence' }
-  })
-  const { bloom, chroma, vignette, glitch, filmGrain, asciiMode, asciiCellSize, asciiDepth } = visualFx
-
-  const { background, envIntensity, orbit } = useControls('Environment', {
-    background: { value: '#0b0d12', label: 'Background' },
-    envIntensity: { value: 0.35, min: 0, max: 2, step: 0.01, label: 'Env Intensity' },
-    orbit: { value: true, label: 'Auto Orbit' }
-  })
-
-  const perf = useControls('Performance', {
-    adaptiveDpr: { value: true, label: 'Adaptive DPR' },
-    targetFps: { value: 55, min: 30, max: 120, step: 1, label: 'Target FPS' },
-    minDpr: { value: 0.75, min: 0.25, max: 2, step: 0.05, label: 'Min DPR' },
-    maxDpr: { value: 1.75, min: 1, max: 3, step: 0.05, label: 'Max DPR' },
-    postScale: { value: 0.9, min: 0.5, max: 1.0, step: 0.01, label: 'Post Scale' },
-    antialias: { value: false, label: 'Hardware AA' },
-    smaa: { value: true, label: 'SMAA' }
-  })
-
-  const audio = useControls('Audio', {
-    General: folder({
-      enabled: { value: true, label: 'Enable Audio' },
-      sensitivity: { value: 1.0, min: 0.1, max: 5, step: 0.01, label: 'Sensitivity' },
-      threshold: { value: 0.05, min: 0, max: 1, step: 0.005, label: 'Threshold' },
-      power: { value: 1.2, min: 0.5, max: 3, step: 0.05, label: 'Power' },
-      smoothing: { value: 0.2, min: 0, max: 1, step: 0.01, label: 'Response Smoothing' }
+  const visualFx = useControls('🎬 Post Processing', {
+    Bloom: folder({
+      bloom: { value: 0.9, min: 0, max: 2, step: 0.01, label: '💫 Intensity' },
+      bloomAudioReactive: { value: true, label: '🎵 Audio Reactive' },
+      bloomMult: { value: 0.8, min: 0, max: 4, step: 0.01, label: '〰️ Audio Mult' }
     }, { collapsed: false }),
-    Effects: folder({
-      bloomMult: { value: 0.8, min: 0, max: 4, step: 0.01, label: 'Bloom Boost' },
-      chromaMult: { value: 0.01, min: -0.05, max: 0.05, step: 0.001, label: 'Chromatic Shift' },
-      vignetteMult: { value: 0.35, min: 0, max: 1, step: 0.01, label: 'Vignette Boost' },
-      filmGrainMult: { value: 0.35, min: 0, max: 2, step: 0.01, label: 'Grain Boost' },
-      glitchMult: { value: 1.0, min: 0, max: 4, step: 0.05, label: 'Glitch Boost' }
-    }),
-    Camera: folder({
-      camEnabled: { value: false, label: 'Enable Camera' },
-      camZBase: { value: 0.0, min: -2, max: 2, step: 0.01, label: 'Base Offset' },
-      camZRange: { value: 0.6, min: 0, max: 2, step: 0.01, label: 'Audio Range' },
-      camSmoothing: { value: 0.2, min: 0, max: 1, step: 0.01, label: 'Smoothing' },
-      camSubBass: { value: 0.4, min: 0, max: 2, step: 0.01, label: 'Sub Bass Weight' },
-      camBass: { value: 1.0, min: 0, max: 2, step: 0.01, label: 'Bass Weight' },
-      camMid: { value: 0.4, min: 0, max: 2, step: 0.01, label: 'Mid Weight' },
-      camTreble: { value: 0.2, min: 0, max: 2, step: 0.01, label: 'Treble Weight' },
-      camBeatKick: { value: 0.25, min: 0, max: 1, step: 0.01, label: 'Beat Kick' },
-      camBeatDecay: { value: 2.0, min: 0.2, max: 8, step: 0.1, label: 'Beat Decay' }
-    }),
-    Material: folder({
-      materialReactive: { value: true, label: 'Enable Material' },
-      materialNoiseAmpMult: { value: 0.12, min: 0, max: 1, step: 0.001, label: 'Noise Boost' },
-      materialDepthScaleMult: { value: 0.5, min: -1, max: 2, step: 0.01, label: 'Depth Boost' },
-      materialHueMult: { value: 0.6, min: -2, max: 2, step: 0.01, label: 'Hue Shift' },
-      materialBrightnessMult: { value: 0.25, min: -1, max: 1, step: 0.01, label: 'Brightness Boost' },
-      materialContrastMult: { value: 0.15, min: -1, max: 1, step: 0.01, label: 'Contrast Boost' },
-      materialSaturationMult: { value: 0.2, min: -1, max: 1, step: 0.01, label: 'Saturation Boost' },
-      materialMathAmpMult: { value: 0.35, min: -1, max: 2, step: 0.01, label: 'Math Amp Boost' },
-      materialMathFreqSwing: { value: 0.4, min: -2, max: 2, step: 0.01, label: 'Math Freq Swing' },
-      materialMathWarpSwing: { value: 0.3, min: -2, max: 2, step: 0.01, label: 'Math Warp Swing' },
-      materialAmbientMult: { value: 0.2, min: -1, max: 2, step: 0.01, label: 'Ambient Pulse' },
-      materialPointLightMult: { value: 0.6, min: -1, max: 4, step: 0.01, label: 'Point Light Pulse' },
-      materialJitterOnBeat: { value: 0.08, min: 0, max: 0.6, step: 0.01, label: 'Jitter Kick' }
-    })
-  })
-
-  const surface = useControls('Surface', {
-    Depth: folder({
-      useDepth: { value: true, label: 'Use Depth' },
-      invertDepth: { value: false, label: 'Invert Depth' },
-      depthScale: { value: 0.25, min: -1, max: 1, step: 0.001, label: 'Depth Scale' },
-      depthBias: { value: 0.5, min: 0, max: 1, step: 0.001, label: 'Depth Bias' },
-      normalStrength: { value: 6.0, min: 0, max: 20, step: 0.1, label: 'Normal Strength' }
+    Chromatic: folder({
+      chroma: { value: 0.006, min: 0, max: 0.02, step: 0.001, label: '🌈 Aberration' },
+      chromaAudioReactive: { value: true, label: '🎵 Audio Reactive' },
+      chromaMult: { value: 0.01, min: -0.05, max: 0.05, step: 0.001, label: '〰️ Audio Mult' }
     }, { collapsed: true }),
-    Lighting: folder({
-      ambient: { value: 0.22, min: 0, max: 1, step: 0.01, label: 'Ambient' },
-      directionalColor: { value: '#ffffff', label: 'Key Color' },
-      directionalIntensity: { value: 1.2, min: 0, max: 4, step: 0.01, label: 'Key Intensity' },
-      directionalDir: { value: { x: -0.7, y: 0.9, z: 0.3 }, label: 'Key Direction' },
-      pointColor: { value: '#a4b2ff', label: 'Fill Color' },
-      pointIntensity: { value: 0.8, min: 0, max: 8, step: 0.01, label: 'Fill Intensity' },
-      pointPos: { value: { x: 0.7, y: 0.6, z: 0.8 }, label: 'Fill Position' },
-      animateLights: { value: false, label: 'Animate Lights' },
-      lightRotSpeed: { value: 0.5, min: 0, max: 2, step: 0.01, label: 'Rotation Speed' },
-      specular: { value: 0.55, min: 0, max: 1, step: 0.01, label: 'Specular' },
-      shininess: { value: 32, min: 1, max: 128, step: 1, label: 'Shininess' }
+    Vignette: folder({
+      vignette: { value: 0.45, min: 0, max: 1, step: 0.01, label: '🎭 Darkness' },
+      vignetteAudioReactive: { value: true, label: '🎵 Audio Reactive' },
+      vignetteMult: { value: 0.35, min: 0, max: 1, step: 0.01, label: '〰️ Audio Mult' }
     }, { collapsed: true }),
-    Color: folder({
-      brightness: { value: 0.0, min: -1, max: 1, step: 0.001, label: 'Brightness' },
-      contrast: { value: 1.0, min: 0, max: 2, step: 0.001, label: 'Contrast' },
-      saturation: { value: 1.0, min: 0, max: 2, step: 0.001, label: 'Saturation' },
-      hue: { value: 0.0, min: -Math.PI, max: Math.PI, step: 0.001, label: 'Hue' },
-      tint: { value: '#ffffff', label: 'Tint' }
-    }),
-    Motion: folder({
-      noiseAmp: { value: 0.025, min: 0, max: 0.25, step: 0.001, label: 'Noise Amp' },
-      noiseFreq: { value: 6.0, min: 0, max: 20, step: 0.01, label: 'Noise Freq' },
-      noiseSpeed: { value: 0.2, min: 0, max: 2, step: 0.01, label: 'Noise Speed' },
-      jitter: { value: 0.02, min: 0, max: 0.2, step: 0.001, label: 'Jitter' }
-    }),
-    Deform: folder({
-      mode: { options: { None: 0, Ripples: 1, Stripes: 2, Swirl: 3, Kaleidoscope: 4, Fractal: 5, 'Wave Interference': 6, Voronoi: 7, Particles: 8 }, value: 1, label: 'Mode' },
-      mathAmp: { value: 0.05, min: 0, max: 0.5, step: 0.001, label: 'Deform Amp' },
-      mathFreq: { value: 6.0, min: 0, max: 40, step: 0.1, label: 'Deform Freq' },
-      timeScale: { value: 1.0, min: 0, max: 4, step: 0.01, label: 'Time Scale' },
-      detail: { value: 1.0, min: 0.1, max: 3, step: 0.01, label: 'Detail' },
-      warp: { value: 0.0, min: 0, max: 3, step: 0.01, label: 'Warp' },
-      blend: { value: 0.5, min: 0, max: 1, step: 0.01, label: 'Blend' },
-      symmetry: { value: 6, min: 2, max: 16, step: 1, label: 'Symmetry' }
+    Glitch: folder({
+      glitch: { value: 0.0, min: 0, max: 1, step: 0.01, label: '⚡ Intensity' },
+      glitchAudioReactive: { value: true, label: '🎵 Audio Reactive' },
+      glitchMult: { value: 1.0, min: 0, max: 4, step: 0.05, label: '〰️ Audio Mult' }
     }, { collapsed: true }),
-    Geometry: folder({
-      segments: { value: 128, min: 16, max: 512, step: 1, label: 'Segments' }
+    FilmGrain: folder({
+      filmGrain: { value: 0.15, min: 0, max: 1, step: 0.01, label: '📹 Noise' },
+      filmGrainAudioReactive: { value: true, label: '🎵 Audio Reactive' },
+      filmGrainMult: { value: 0.35, min: 0, max: 2, step: 0.01, label: '〰️ Audio Mult' }
+    }, { collapsed: true }),
+    Pixelation: folder({
+      pixelationEnabled: { value: false, label: '🔲 Enable' },
+      pixelSize: { value: 6, min: 1, max: 32, step: 1, label: '📐 Pixel Size' }
+    }, { collapsed: true }),
+    DotScreen: folder({
+      dotScreenEnabled: { value: false, label: '⚫ Enable' },
+      dotScale: { value: 0.5, min: 0.1, max: 2, step: 0.01, label: '📏 Scale' },
+      dotAngle: { value: 1.57, min: 0, max: 6.28, step: 0.01, label: '🔄 Angle' }
+    }, { collapsed: true }),
+    Scanline: folder({
+      scanlineEnabled: { value: false, label: '📺 Enable' },
+      scanlineDensity: { value: 1.5, min: 0.1, max: 4, step: 0.1, label: '📊 Density' }
+    }, { collapsed: true }),
+    ASCII: folder({
+      asciiMode: { value: false, label: '🔤 Enable' },
+      asciiCellSize: { value: 8.0, min: 4, max: 24, step: 1, label: '📐 Cell Size' },
+      asciiDepth: { value: 0.5, min: 0, max: 1, step: 0.01, label: '🎯 Char Density' },
+      asciiContrast: { value: 1.2, min: 0.5, max: 3, step: 0.01, label: '🔆 Contrast' },
+      asciiBrightness: { value: 0.0, min: -1, max: 1, step: 0.01, label: '💡 Brightness' },
+      asciiColorize: { value: true, label: '🎨 Colorize' },
+      ascii3D: { value: true, label: '🌊 3D Depth' },
+      asciiDepthScale: { value: 0.15, min: 0, max: 0.5, step: 0.01, label: '📏 Depth Scale' },
+      asciiSegments: { value: 128, min: 32, max: 256, step: 16, label: '🔷 Mesh Quality' },
+      asciiAnimate: { value: true, label: '🎬 Animate' },
+      asciiSpeed: { value: 1.0, min: 0, max: 4, step: 0.1, label: '⚡ Anim Speed' },
+      asciiWaveAmp: { value: 0.02, min: 0, max: 0.2, step: 0.01, label: '🌊 Wave' },
+      asciiJitter: { value: 0.005, min: 0, max: 0.05, step: 0.001, label: '📳 Jitter' },
+      asciiAudioReactive: { value: true, label: '🎵 Audio Reactive' }
     }, { collapsed: true })
-  })
+  }, { collapsed: false, order: 1 })
+  const { 
+    bloom, chroma, vignette, glitch, filmGrain,
+    bloomAudioReactive, bloomMult,
+    chromaAudioReactive, chromaMult,
+    vignetteAudioReactive, vignetteMult,
+    glitchAudioReactive, glitchMult,
+    filmGrainAudioReactive, filmGrainMult,
+    pixelationEnabled, pixelSize,
+    dotScreenEnabled, dotScale, dotAngle,
+    scanlineEnabled, scanlineDensity,
+    asciiMode, asciiCellSize, asciiDepth, 
+    asciiContrast, asciiBrightness, asciiColorize, 
+    ascii3D, asciiDepthScale, asciiSegments,
+    asciiAnimate, asciiSpeed, asciiWaveAmp, asciiJitter, asciiAudioReactive
+  } = visualFx
 
+  const environment = useControls('🌍 Environment', {
+    background: { value: '#0b0d12', label: '🎨 Background' },
+    envIntensity: { value: 0.35, min: 0, max: 2, step: 0.01, label: '💡 Env Light' },
+    orbit: { value: true, label: '🔄 Auto Orbit' },
+    orbitSpeed: { value: 0.15, min: 0, max: 1, step: 0.01, label: '⚡ Orbit Speed' },
+    parallaxAmount: { value: 0.15, min: 0, max: 1, step: 0.01, label: '👆 Parallax' }
+  }, { collapsed: true, order: 2 })
+  const { background, envIntensity, orbit, orbitSpeed, parallaxAmount } = environment
+
+  const camera = useControls('📷 Camera', {
+    camAudioReactive: { value: false, label: '🎵 Audio Reactive' },
+    camZBase: { value: 0.0, min: -2, max: 2, step: 0.01, label: '📏 Base Z' },
+    camZRange: { value: 0.6, min: 0, max: 2, step: 0.01, label: '🌊 Range' },
+    camSmoothing: { value: 0.2, min: 0, max: 1, step: 0.01, label: '〰️ Smooth' },
+    camSubBass: { value: 0.4, min: 0, max: 2, step: 0.01, label: '🔊 Sub Bass' },
+    camBass: { value: 1.0, min: 0, max: 2, step: 0.01, label: '🎸 Bass' },
+    camMid: { value: 0.4, min: 0, max: 2, step: 0.01, label: '🎹 Mid' },
+    camTreble: { value: 0.2, min: 0, max: 2, step: 0.01, label: '🎺 Treble' },
+    camBeatKick: { value: 0.25, min: 0, max: 1, step: 0.01, label: '🥁 Beat Kick' },
+    camBeatDecay: { value: 2.0, min: 0.2, max: 8, step: 0.1, label: '⏱️ Decay' }
+  }, { collapsed: true, order: 3 })
   const {
-    enabled: audioEnabled,
-    sensitivity: audioSensitivity,
-    threshold: audioThreshold,
-    power: audioPower,
-    smoothing: audioSmoothing,
-    bloomMult,
-    chromaMult,
-    vignetteMult,
-    filmGrainMult,
-    glitchMult,
-    camEnabled: rawCamEnabled,
+    camAudioReactive,
     camZBase,
     camZRange,
     camSmoothing,
@@ -268,8 +237,160 @@ export default function Scene({ colorURL, depthURL }) {
     camMid,
     camTreble,
     camBeatKick,
-    camBeatDecay,
-    materialReactive: rawMaterialReactive,
+    camBeatDecay
+  } = camera
+
+  const perf = useControls('⚙️ Performance', {
+    adaptiveDpr: { value: true, label: '🎯 Adaptive DPR' },
+    targetFps: { value: 55, min: 30, max: 120, step: 1, label: '🎮 Target FPS' },
+    minDpr: { value: 0.75, min: 0.25, max: 2, step: 0.05, label: '📉 Min DPR' },
+    maxDpr: { value: 1.75, min: 1, max: 3, step: 0.05, label: '📈 Max DPR' },
+    postScale: { value: 0.9, min: 0.5, max: 1.0, step: 0.01, label: '🖼️ Post Scale' },
+    antialias: { value: false, label: '✨ Hardware AA' },
+    smaa: { value: true, label: '🎨 SMAA' }
+  }, { collapsed: true, order: 7 })
+
+  const layersCtl = useControls('🎭 Layers', {
+    multiLayer: { value: false, label: '📚 Multi-Layer' },
+    count: { value: 3, min: 1, max: 6, step: 1, label: '🔢 Count' },
+    spreadZ: { value: 0.08, min: 0.0, max: 0.5, step: 0.005, label: '📏 Z Spread' },
+    scaleSpread: { value: 0.03, min: 0.0, max: 0.2, step: 0.001, label: '📐 Scale' },
+    depthScaleFalloff: { value: 0.85, min: 0.5, max: 1.0, step: 0.01, label: '🌊 Depth' },
+    opacityStart: { value: 0.9, min: 0.1, max: 1.0, step: 0.01, label: '👁️ Opacity' },
+    opacityFalloff: { value: 0.75, min: 0.4, max: 1.0, step: 0.01, label: '📉 Falloff' }
+  }, { collapsed: true, order: 4 })
+
+  const audioGlobal = useControls('🎵 Audio Settings', {
+    enabled: { value: true, label: '🔊 Enable Audio' },
+    sensitivity: { value: 1.0, min: 0.1, max: 5, step: 0.01, label: '📡 Sensitivity' },
+    threshold: { value: 0.05, min: 0, max: 1, step: 0.005, label: '🎚️ Threshold' },
+    power: { value: 1.2, min: 0.5, max: 3, step: 0.05, label: '⚡ Power' },
+    smoothing: { value: 0.2, min: 0, max: 1, step: 0.01, label: '〰️ Smoothing' }
+  }, { collapsed: true, order: 5 })
+  const {
+    enabled: audioEnabled,
+    sensitivity: audioSensitivity,
+    threshold: audioThreshold,
+    power: audioPower,
+    smoothing: audioSmoothing
+  } = audioGlobal
+
+  const surface = useControls('🎨 Surface', {
+    Depth: folder({
+      useDepth: { value: true, label: '🌊 Use Depth' },
+      invertDepth: { value: false, label: '🔄 Invert' },
+      depthScale: { value: 0.25, min: -1, max: 1, step: 0.001, label: '📏 Scale' },
+      depthBias: { value: 0.5, min: 0, max: 1, step: 0.001, label: '⚖️ Bias' },
+      normalStrength: { value: 6.0, min: 0, max: 20, step: 0.1, label: '💪 Normal' }
+    }, { collapsed: true }),
+    Lighting: folder({
+      ambient: { value: 0.22, min: 0, max: 1, step: 0.01, label: '🔦 Ambient' },
+      directionalColor: { value: '#ffffff', label: '🌟 Key Color' },
+      directionalIntensity: { value: 1.2, min: 0, max: 4, step: 0.01, label: '💡 Key' },
+      directionalDirX: { value: -0.7, min: -1, max: 1, step: 0.01, label: '↔️ Dir X' },
+      directionalDirY: { value: 0.9, min: -1, max: 1, step: 0.01, label: '↕️ Dir Y' },
+      directionalDirZ: { value: 0.3, min: -1, max: 1, step: 0.01, label: '⤴️ Dir Z' },
+      pointColor: { value: '#a4b2ff', label: '✨ Fill Color' },
+      pointIntensity: { value: 0.8, min: 0, max: 8, step: 0.01, label: '💡 Fill' },
+      pointPosX: { value: 0.7, min: -2, max: 2, step: 0.01, label: '↔️ Pos X' },
+      pointPosY: { value: 0.6, min: -2, max: 2, step: 0.01, label: '↕️ Pos Y' },
+      pointPosZ: { value: 0.8, min: -2, max: 2, step: 0.01, label: '⤴️ Pos Z' },
+      animateLights: { value: false, label: '🔄 Animate' },
+      lightRotSpeed: { value: 0.5, min: 0, max: 2, step: 0.01, label: '⚡ Speed' },
+      specular: { value: 0.55, min: 0, max: 1, step: 0.01, label: '✨ Specular' },
+      shininess: { value: 32, min: 1, max: 128, step: 1, label: '💎 Shininess' }
+    }, { collapsed: true }),
+    Color: folder({
+      brightness: { value: 0.0, min: -1, max: 1, step: 0.001, label: '💡 Brightness' },
+      contrast: { value: 1.0, min: 0, max: 2, step: 0.001, label: '🔆 Contrast' },
+      saturation: { value: 1.0, min: 0, max: 2, step: 0.001, label: '🎨 Saturation' },
+      hue: { value: 0.0, min: -Math.PI, max: Math.PI, step: 0.001, label: '🌈 Hue' },
+      tint: { value: '#ffffff', label: '🎨 Tint' }
+    }, { collapsed: false }),
+    Motion: folder({
+      noiseAmp: { value: 0.025, min: 0, max: 0.25, step: 0.001, label: '🌀 Noise Amp' },
+      noiseFreq: { value: 6.0, min: 0, max: 20, step: 0.01, label: '〰️ Noise Freq' },
+      noiseSpeed: { value: 0.2, min: 0, max: 2, step: 0.01, label: '⚡ Speed' },
+      jitter: { value: 0.02, min: 0, max: 0.2, step: 0.001, label: '📳 Jitter' }
+    }, { collapsed: false }),
+    Deform: folder({
+      mode: { 
+        options: { 
+          None: 0, Ripples: 1, Stripes: 2, Swirl: 3, Kaleidoscope: 4, Fractal: 5, 
+          'Wave Interference': 6, Voronoi: 7, Particles: 8, Hexagon: 9, Plasma: 10,
+          'Flow Field': 11, Crystal: 12, Helix: 13, Foam: 14, 'Mandelbrot': 15
+        }, 
+        value: 1, 
+        label: '🎭 Mode' 
+      },
+      mathAmp: { value: 0.05, min: 0, max: 0.5, step: 0.001, label: '📐 Amp' },
+      mathFreq: { value: 6.0, min: 0, max: 40, step: 0.1, label: '〰️ Freq' },
+      timeScale: { value: 1.0, min: 0, max: 4, step: 0.01, label: '⏱️ Time' },
+      detail: { value: 1.0, min: 0.1, max: 3, step: 0.01, label: '🔍 Detail' },
+      warp: { value: 0.0, min: 0, max: 3, step: 0.01, label: '🌀 Warp' },
+      blend: { value: 0.5, min: 0, max: 1, step: 0.01, label: '🎨 Blend' },
+      symmetry: { value: 6, min: 2, max: 16, step: 1, label: '🔷 Symmetry' }
+    }, { collapsed: true }),
+    Geometry: folder({
+      segments: { value: 128, min: 16, max: 512, step: 1, label: '🔷 Segments' }
+    }, { collapsed: true }),
+    AudioReactive: folder({
+      materialAudioReactive: { value: true, label: '🎵 Audio Reactive' },
+      materialNoiseAmpMult: { value: 0.12, min: 0, max: 1, step: 0.001, label: '🌀 Noise Mult' },
+      materialDepthScaleMult: { value: 0.5, min: -1, max: 2, step: 0.01, label: '🌊 Depth Mult' },
+      materialHueMult: { value: 0.6, min: -2, max: 2, step: 0.01, label: '🌈 Hue Mult' },
+      materialBrightnessMult: { value: 0.25, min: -1, max: 1, step: 0.01, label: '💡 Brightness Mult' },
+      materialContrastMult: { value: 0.15, min: -1, max: 1, step: 0.01, label: '🔆 Contrast Mult' },
+      materialSaturationMult: { value: 0.2, min: -1, max: 1, step: 0.01, label: '🎨 Saturation Mult' },
+      materialMathAmpMult: { value: 0.35, min: -1, max: 2, step: 0.01, label: '📐 Math Amp Mult' },
+      materialMathFreqSwing: { value: 0.4, min: -2, max: 2, step: 0.01, label: '〰️ Freq Swing' },
+      materialMathWarpSwing: { value: 0.3, min: -2, max: 2, step: 0.01, label: '🌀 Warp Swing' },
+      materialAmbientMult: { value: 0.2, min: -1, max: 2, step: 0.01, label: '🔦 Ambient Mult' },
+      materialPointLightMult: { value: 0.6, min: -1, max: 4, step: 0.01, label: '💡 Point Light Mult' },
+      materialJitterOnBeat: { value: 0.08, min: 0, max: 0.6, step: 0.01, label: '📳 Jitter on Beat' }
+    }, { collapsed: true })
+  }, { collapsed: true, order: 6 })
+
+  const {
+    useDepth,
+    invertDepth,
+    depthScale,
+    depthBias,
+    normalStrength,
+    ambient,
+    directionalColor,
+    directionalIntensity,
+    directionalDirX,
+    directionalDirY,
+    directionalDirZ,
+    pointColor,
+    pointIntensity,
+    pointPosX,
+    pointPosY,
+    pointPosZ,
+    animateLights,
+    lightRotSpeed,
+    specular,
+    shininess,
+    brightness,
+    contrast,
+    saturation,
+    hue,
+    tint,
+    noiseAmp,
+    noiseFreq,
+    noiseSpeed,
+    jitter,
+    mode,
+    mathAmp,
+    mathFreq,
+    timeScale,
+    detail,
+    warp,
+    blend,
+    symmetry,
+    segments,
+    materialAudioReactive,
     materialNoiseAmpMult,
     materialDepthScaleMult,
     materialHueMult,
@@ -282,27 +403,30 @@ export default function Scene({ colorURL, depthURL }) {
     materialAmbientMult,
     materialPointLightMult,
     materialJitterOnBeat
-  } = audio
+  } = surface
 
   const effectsAudio = useMemo(
     () => ({
-      enabled: audioEnabled,
+      enabled: audioEnabled && (bloomAudioReactive || chromaAudioReactive || vignetteAudioReactive || filmGrainAudioReactive || glitchAudioReactive),
       sensitivity: audioSensitivity,
       threshold: audioThreshold,
       power: audioPower,
       smoothing: audioSmoothing,
-      bloomMult,
-      chromaMult,
-      vignetteMult,
-      filmGrainMult,
-      glitchMult
+      bloomMult: bloomAudioReactive ? bloomMult : 0,
+      chromaMult: chromaAudioReactive ? chromaMult : 0,
+      vignetteMult: vignetteAudioReactive ? vignetteMult : 0,
+      filmGrainMult: filmGrainAudioReactive ? filmGrainMult : 0,
+      glitchMult: glitchAudioReactive ? glitchMult : 0
     }),
-    [audioEnabled, audioSensitivity, audioThreshold, audioPower, audioSmoothing, bloomMult, chromaMult, vignetteMult, filmGrainMult, glitchMult]
+    [audioEnabled, audioSensitivity, audioThreshold, audioPower, audioSmoothing, 
+     bloomAudioReactive, bloomMult, chromaAudioReactive, chromaMult, 
+     vignetteAudioReactive, vignetteMult, filmGrainAudioReactive, filmGrainMult, 
+     glitchAudioReactive, glitchMult]
   )
 
   const materialAudio = useMemo(
     () => ({
-      audioReactive: rawMaterialReactive && audioEnabled,
+      audioReactive: materialAudioReactive && audioEnabled,
       sensitivity: audioSensitivity,
       threshold: audioThreshold,
       power: audioPower,
@@ -321,7 +445,7 @@ export default function Scene({ colorURL, depthURL }) {
       jitterOnBeat: materialJitterOnBeat
     }),
     [
-      rawMaterialReactive,
+      materialAudioReactive,
       audioEnabled,
       audioSensitivity,
       audioThreshold,
@@ -344,7 +468,7 @@ export default function Scene({ colorURL, depthURL }) {
 
   const camAudio = useMemo(
     () => ({
-      enabled: rawCamEnabled && audioEnabled,
+      enabled: camAudioReactive && audioEnabled,
       zBase: camZBase,
       zRange: camZRange,
       smoothing: camSmoothing,
@@ -355,45 +479,11 @@ export default function Scene({ colorURL, depthURL }) {
       beatKick: camBeatKick,
       beatDecay: camBeatDecay
     }),
-    [rawCamEnabled, audioEnabled, camZBase, camZRange, camSmoothing, camSubBass, camBass, camMid, camTreble, camBeatKick, camBeatDecay]
+    [camAudioReactive, audioEnabled, camZBase, camZRange, camSmoothing, camSubBass, camBass, camMid, camTreble, camBeatKick, camBeatDecay]
   )
 
-  const {
-    useDepth,
-    invertDepth,
-    depthScale,
-    depthBias,
-    normalStrength,
-    ambient,
-    directionalColor,
-    directionalIntensity,
-    directionalDir,
-    pointColor,
-    pointIntensity,
-    pointPos,
-    animateLights,
-    lightRotSpeed,
-    specular,
-    shininess,
-    brightness,
-    contrast,
-    saturation,
-    hue,
-    tint,
-    noiseAmp,
-    noiseFreq,
-    noiseSpeed,
-    jitter,
-    mode,
-    mathAmp,
-    mathFreq,
-    timeScale,
-    detail,
-    warp,
-    blend,
-    symmetry,
-    segments
-  } = surface
+  const directionalDir = useMemo(() => ({ x: directionalDirX, y: directionalDirY, z: directionalDirZ }), [directionalDirX, directionalDirY, directionalDirZ])
+  const pointPos = useMemo(() => ({ x: pointPosX, y: pointPosY, z: pointPosZ }), [pointPosX, pointPosY, pointPosZ])
 
   const depthSettings = useMemo(
     () => ({ useDepth, invertDepth, depthScale, depthBias, normalStrength }),
@@ -478,15 +568,6 @@ export default function Scene({ colorURL, depthURL }) {
   // proper r3f context. It computes dynamic effect values from the audio
   // controller and updates a small React state at a throttled rate so the
   // effect components receive serializable props only.
-  const layersCtl = useControls('Layers', {
-    multiLayer: false,
-    count: { value: 3, min: 1, max: 6, step: 1 },
-    spreadZ: { value: 0.08, min: 0.0, max: 0.5, step: 0.005 },
-    scaleSpread: { value: 0.03, min: 0.0, max: 0.2, step: 0.001 },
-    depthScaleFalloff: { value: 0.85, min: 0.5, max: 1.0, step: 0.01 },
-    opacityStart: { value: 0.9, min: 0.1, max: 1.0, step: 0.01 },
-    opacityFalloff: { value: 0.75, min: 0.4, max: 1.0, step: 0.01 }
-  })
 
   function EffectsUpdater() {
     const lastRef = useRef(0)
@@ -656,7 +737,7 @@ export default function Scene({ colorURL, depthURL }) {
         <Environment preset="studio" environmentIntensity={envIntensity} />
 
         <AudioCameraZ />
-        <Rig orbit={orbit} zOffset={camZRef.current}>
+        <Rig orbit={orbit} orbitSpeed={orbitSpeed} parallax={parallaxAmount} zOffset={camZRef.current} cameraMode={cameraMode}>
           {asciiMode ? (
             <ASCIIEffect 
               colorURL={colorURL}
@@ -664,9 +745,18 @@ export default function Scene({ colorURL, depthURL }) {
               cellSize={asciiCellSize}
               depthInfluence={asciiDepth}
               invertDepth={invertDepth}
-              brightness={brightness}
-              contrast={contrast}
+              brightness={asciiBrightness}
+              contrast={asciiContrast}
               tint={tint}
+              colorize={asciiColorize}
+              animate={asciiAnimate}
+              animSpeed={asciiSpeed}
+              waveAmp={asciiWaveAmp}
+              jitter={asciiJitter}
+              use3D={ascii3D}
+              depthScale={asciiDepthScale}
+              segments={asciiSegments}
+              audioReactive={asciiAudioReactive}
               enabled={true}
             />
           ) : layersCtl.multiLayer ? (
@@ -705,10 +795,10 @@ export default function Scene({ colorURL, depthURL }) {
       <EffectComposer multisampling={0} frameBufferType={THREE.HalfFloatType} resolutionScale={perf.postScale}>
         {/* Initial/base values are set from the Leva controls. They will be
             updated imperatively in the r3f render loop using audioBus data. */}
-    {/* Disable mipmap blur to avoid instantiating KawaseBlurPass which can
-      cause circular structures when internal passes are inspected by
-      older library internals. Use the simpler bloom implementation. */}
-    <Bloom intensity={effectsState.bloom ?? bloom} luminanceThreshold={0.15} luminanceSmoothing={0.25} />
+        {/* Disable mipmap blur to avoid instantiating KawaseBlurPass which can
+          cause circular structures when internal passes are inspected by
+          older library internals. Use the simpler bloom implementation. */}
+        <Bloom intensity={effectsState.bloom ?? bloom} luminanceThreshold={0.15} luminanceSmoothing={0.25} />
         <ChromaticAberration offset={[effectsState.chroma ?? chroma, 0]} radialModulation modulationOffset={0.2} />
         <Vignette eskil={false} darkness={effectsState.vignette ?? vignette} offset={0.5} />
         <Glitch
@@ -719,9 +809,12 @@ export default function Scene({ colorURL, depthURL }) {
           columns={0.12}
           active={(effectsState.glitch ?? 0) > 0.01}
         />
+        <Noise premultiply blendFunction={BlendFunction.ADD} opacity={effectsState.filmGrain ?? filmGrain} />
+        {pixelationEnabled && <Pixelation granularity={pixelSize} />}
+        {dotScreenEnabled && <DotScreen angle={dotAngle} scale={dotScale} />}
+        {scanlineEnabled && <Scanline density={scanlineDensity} />}
         {/* If hardware AA is off, apply lightweight SMAA */}
         {perf.smaa && !perf.antialias && <SMAA />}
-        <Noise premultiply blendFunction={BlendFunction.ADD} opacity={effectsState.filmGrain ?? filmGrain} />
       </EffectComposer>
       <EffectsUpdater />
     </Canvas>
