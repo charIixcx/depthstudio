@@ -14,7 +14,11 @@ import { CAMERA_PRESETS } from '../lib/presets'
 function Rig({ children, parallax = 0.15, orbit = true, zOffset = 0, orbitSpeed = 0.15, cameraMode = 'orbit' }) {
   const group = useRef()
   const t = useRef(0)
-  const { camera, pointer } = useThree()
+  const { camera, pointer, controls } = useThree()
+  const lastInteractionTime = useRef(0)
+  const interactionCooldown = 2000 // 2 seconds after user stops interacting
+  const lastCameraPos = useRef(new THREE.Vector3())
+  const lastCameraRot = useRef(new THREE.Euler())
 
   useFrame((state, delta) => {
     t.current += delta
@@ -24,19 +28,43 @@ function Rig({ children, parallax = 0.15, orbit = true, zOffset = 0, orbitSpeed 
     group.current.rotation.y += (tx - group.current.rotation.y) * 0.07
     group.current.rotation.x += (ty - group.current.rotation.x) * 0.07
 
-    // Apply camera preset if available
-    const preset = CAMERA_PRESETS[cameraMode]
-    if (preset && preset.update) {
-      preset.update(camera, t.current, orbitSpeed)
-      camera.lookAt(0, 0, 0)
-    } else if (orbit) {
-      // Fallback to default orbit
-      const r = 2.5
-      const s = t.current * orbitSpeed
-      camera.position.x = Math.cos(s) * r
-      camera.position.z = Math.sin(s) * r + zOffset
-      camera.position.y = 0.7 + Math.sin(s * 0.8) * 0.15
-      camera.lookAt(0, 0, 0)
+    // Detect if user manually moved the camera via OrbitControls
+    const currentPos = camera.position.clone()
+    const currentRot = camera.rotation.clone()
+    const posChanged = currentPos.distanceTo(lastCameraPos.current) > 0.01
+    const rotChanged = Math.abs(currentRot.x - lastCameraRot.current.x) > 0.01 ||
+                       Math.abs(currentRot.y - lastCameraRot.current.y) > 0.01 ||
+                       Math.abs(currentRot.z - lastCameraRot.current.z) > 0.01
+    
+    // Check if controls exist and are being used
+    const controlsActive = controls && (posChanged || rotChanged)
+    
+    if (controlsActive) {
+      lastInteractionTime.current = Date.now()
+    }
+    
+    lastCameraPos.current.copy(currentPos)
+    lastCameraRot.current.copy(currentRot)
+
+    const timeSinceInteraction = Date.now() - lastInteractionTime.current
+    const shouldAutoOrbit = orbit && timeSinceInteraction > interactionCooldown
+
+    // Only auto-orbit if enough time has passed since last manual interaction
+    if (shouldAutoOrbit) {
+      // Apply camera preset if available
+      const preset = CAMERA_PRESETS[cameraMode]
+      if (preset && preset.update) {
+        preset.update(camera, t.current, orbitSpeed)
+        camera.lookAt(0, 0, 0)
+      } else {
+        // Fallback to default orbit
+        const r = 2.5
+        const s = t.current * orbitSpeed
+        camera.position.x = Math.cos(s) * r
+        camera.position.z = Math.sin(s) * r + zOffset
+        camera.position.y = 0.7 + Math.sin(s * 0.8) * 0.15
+        camera.lookAt(0, 0, 0)
+      }
     }
   })
 
@@ -790,7 +818,16 @@ export default function Scene({ colorURL, depthURL, onAudioData, cameraMode = 'o
         </Rig>
       </Suspense>
 
-      <OrbitControls enabled={!orbit} enableDamping dampingFactor={0.1} />
+      <OrbitControls 
+        makeDefault
+        enableDamping 
+        dampingFactor={0.05}
+        enablePan={true}
+        enableRotate={true}
+        enableZoom={true}
+        minDistance={1}
+        maxDistance={10}
+      />
 
       <EffectComposer multisampling={0} frameBufferType={THREE.HalfFloatType} resolutionScale={perf.postScale}>
         {/* Initial/base values are set from the Leva controls. They will be

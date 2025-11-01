@@ -31,6 +31,7 @@ export default function App() {
   const [fps, setFps] = useState(60)
   const [isRecording, setIsRecording] = useState(false)
   const [recordDuration, setRecordDuration] = useState(0)
+  const [audioControlsVisible, setAudioControlsVisible] = useState(true)
   const colorRef = useRef(null)
   const depthRef = useRef(null)
   const sceneRef = useRef(null)
@@ -524,10 +525,48 @@ export default function App() {
         </button>
       </div>
 
-      {/* Old UI (hidden but keeping AudioAnalyzer) */}
-      <div style={{ display: 'none' }}>
-        <AudioAnalyzer onAudioData={setAudioData} />
+      {/* Audio Controls */}
+      <div style={{
+        position: 'fixed',
+        top: audioControlsVisible ? '20px' : '-500px',
+        left: '20px',
+        zIndex: 999,
+        backgroundColor: 'rgba(11, 13, 18, 0.85)',
+        backdropFilter: 'blur(20px)',
+        borderRadius: '16px',
+        padding: audioControlsVisible ? '20px' : '0',
+        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)',
+        border: '1px solid rgba(255, 255, 255, 0.1)',
+        minWidth: '280px',
+        maxWidth: '320px',
+        transition: 'all 0.3s ease',
+      }}>
+        {audioControlsVisible && <AudioAnalyzer onAudioData={setAudioData} />}
       </div>
+
+      {/* Audio Controls Toggle Button */}
+      <button
+        onClick={() => setAudioControlsVisible(!audioControlsVisible)}
+        style={{
+          position: 'fixed',
+          top: '20px',
+          left: audioControlsVisible ? '340px' : '20px',
+          zIndex: 1000,
+          padding: '12px 16px',
+          backgroundColor: 'rgba(11, 13, 18, 0.85)',
+          backdropFilter: 'blur(20px)',
+          border: '1px solid rgba(255, 255, 255, 0.2)',
+          borderRadius: '12px',
+          color: '#fff',
+          fontSize: '20px',
+          cursor: 'pointer',
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+          transition: 'all 0.3s ease',
+        }}
+        title={audioControlsVisible ? 'Hide Audio Controls' : 'Show Audio Controls'}
+      >
+        {audioControlsVisible ? '🎵' : '🎧'}
+      </button>
 
       <Scene 
         ref={sceneRef}
