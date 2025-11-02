@@ -235,6 +235,8 @@
   transition: all var(--transition-base);
   position: relative;
   overflow: hidden;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
 }
 
 .tab-button::before {
@@ -360,6 +362,7 @@
 
 .tab-description p {
   margin: 0;
+  font-weight: 500;
 }
 
 /* Leva Container with Modern Integration */

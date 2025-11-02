@@ -15,82 +15,6 @@ export default function TabbedControls({ isOpen, onToggle }) {
   const [activeTab, setActiveTab] = useState('master');
   const [isMinimized, setIsMinimized] = useState(false);
 
-  const getVisiblePanels = (tabId) => {
-    const tabPanelMap = {
-      'master': ['🎨 Master'],
-      'effects': ['🎬 Post Processing'],
-      'surface': ['🎨 Surface'],
-      'environment': ['🌍 Environment', '📷 Camera', '🎭 Layers'],
-      'audio': ['🎵 Audio Settings'],
-      'advanced': ['⚙️ Performance']
-    };
-    return tabPanelMap[tabId] || [];
-  };
-
-  // Use CSS to hide/show panels based on active tab
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const visiblePanels = getVisiblePanels(activeTab);
-
-    const updatePanelVisibility = () => {
-      // Wait for Leva to render
-      requestAnimationFrame(() => {
-        // Find the Leva container
-        const levaContainers = document.querySelectorAll('[class*="leva"]');
-        
-        levaContainers.forEach(container => {
-          // Find all folder wrappers (these contain the panel titles)
-          const folders = container.querySelectorAll('[class*="Folder"]');
-          
-          folders.forEach(folder => {
-            // Check if this folder has a title element
-            const titleElement = folder.querySelector('[class*="title"], [class*="Title"]');
-            if (titleElement) {
-              const titleText = titleElement.textContent;
-              
-              // Check if this title matches any of our panels
-              const allPanels = [
-                '🎨 Master',
-                '🎬 Post Processing',
-                '🎨 Surface',
-                '🌍 Environment',
-                '📷 Camera',
-                '🎭 Layers',
-                '🎵 Audio Settings',
-                '⚙️ Performance'
-              ];
-              
-              if (allPanels.includes(titleText)) {
-                // Find the wrapper that contains this entire panel
-                const panelWrapper = folder.closest('[class*="Wrapper"]') || folder.parentElement;
-                if (panelWrapper) {
-                  if (visiblePanels.includes(titleText)) {
-                    panelWrapper.style.display = '';
-                    panelWrapper.style.visibility = 'visible';
-                    panelWrapper.style.height = 'auto';
-                  } else {
-                    panelWrapper.style.display = 'none';
-                    panelWrapper.style.visibility = 'hidden';
-                    panelWrapper.style.height = '0';
-                  }
-                }
-              }
-            }
-          });
-        });
-      });
-    };
-
-    // Initial update
-    updatePanelVisibility();
-
-    // Also update after a delay to catch late renders
-    const timeout = setTimeout(updatePanelVisibility, 150);
-
-    return () => clearTimeout(timeout);
-  }, [activeTab, isOpen]);
-
   if (!isOpen) {
     return (
       <button
@@ -172,7 +96,7 @@ export default function TabbedControls({ isOpen, onToggle }) {
               </div>
 
               {/* Leva Controls */}
-              <div className="leva-container">
+              <div className="leva-container" data-active-tab={activeTab}>
                 <Leva 
                   flat
                   oneLineLabels
