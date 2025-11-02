@@ -338,6 +338,102 @@
   background: transparent !important;
 }
 
+/* Tab-based panel visibility using CSS - targets panels by their order */
+/* Order: 0=Master, 1=PostProcessing, 2=Environment, 3=Camera, 4=Layers, 5=Audio, 6=Surface, 7=Performance */
+
+/* Hide all panels by default when specific tab is active */
+.leva-container[data-active-tab] > div > div > div {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+/* Master tab - show only panel order 0 (Master) */
+.leva-container[data-active-tab="master"] > div > div > div:nth-of-type(2),
+.leva-container[data-active-tab="master"] > div > div > div:nth-of-type(3),
+.leva-container[data-active-tab="master"] > div > div > div:nth-of-type(4),
+.leva-container[data-active-tab="master"] > div > div > div:nth-of-type(5),
+.leva-container[data-active-tab="master"] > div > div > div:nth-of-type(6),
+.leva-container[data-active-tab="master"] > div > div > div:nth-of-type(7),
+.leva-container[data-active-tab="master"] > div > div > div:nth-of-type(8) {
+  display: none !important;
+  height: 0 !important;
+  overflow: hidden !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Effects tab - show only panel order 1 (Post Processing) */
+.leva-container[data-active-tab="effects"] > div > div > div:nth-of-type(1),
+.leva-container[data-active-tab="effects"] > div > div > div:nth-of-type(3),
+.leva-container[data-active-tab="effects"] > div > div > div:nth-of-type(4),
+.leva-container[data-active-tab="effects"] > div > div > div:nth-of-type(5),
+.leva-container[data-active-tab="effects"] > div > div > div:nth-of-type(6),
+.leva-container[data-active-tab="effects"] > div > div > div:nth-of-type(7),
+.leva-container[data-active-tab="effects"] > div > div > div:nth-of-type(8) {
+  display: none !important;
+  height: 0 !important;
+  overflow: hidden !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Surface tab - show only panel order 6 (Surface) */
+.leva-container[data-active-tab="surface"] > div > div > div:nth-of-type(1),
+.leva-container[data-active-tab="surface"] > div > div > div:nth-of-type(2),
+.leva-container[data-active-tab="surface"] > div > div > div:nth-of-type(3),
+.leva-container[data-active-tab="surface"] > div > div > div:nth-of-type(4),
+.leva-container[data-active-tab="surface"] > div > div > div:nth-of-type(5),
+.leva-container[data-active-tab="surface"] > div > div > div:nth-of-type(6),
+.leva-container[data-active-tab="surface"] > div > div > div:nth-of-type(8) {
+  display: none !important;
+  height: 0 !important;
+  overflow: hidden !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Scene/Environment tab - show panels order 2,3,4 (Environment, Camera, Layers) */
+.leva-container[data-active-tab="environment"] > div > div > div:nth-of-type(1),
+.leva-container[data-active-tab="environment"] > div > div > div:nth-of-type(2),
+.leva-container[data-active-tab="environment"] > div > div > div:nth-of-type(6),
+.leva-container[data-active-tab="environment"] > div > div > div:nth-of-type(7),
+.leva-container[data-active-tab="environment"] > div > div > div:nth-of-type(8) {
+  display: none !important;
+  height: 0 !important;
+  overflow: hidden !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Audio tab - show only panel order 5 (Audio Settings) */
+.leva-container[data-active-tab="audio"] > div > div > div:nth-of-type(1),
+.leva-container[data-active-tab="audio"] > div > div > div:nth-of-type(2),
+.leva-container[data-active-tab="audio"] > div > div > div:nth-of-type(3),
+.leva-container[data-active-tab="audio"] > div > div > div:nth-of-type(4),
+.leva-container[data-active-tab="audio"] > div > div > div:nth-of-type(5),
+.leva-container[data-active-tab="audio"] > div > div > div:nth-of-type(7),
+.leva-container[data-active-tab="audio"] > div > div > div:nth-of-type(8) {
+  display: none !important;
+  height: 0 !important;
+  overflow: hidden !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Advanced tab - show only panel order 7 (Performance) */
+.leva-container[data-active-tab="advanced"] > div > div > div:nth-of-type(1),
+.leva-container[data-active-tab="advanced"] > div > div > div:nth-of-type(2),
+.leva-container[data-active-tab="advanced"] > div > div > div:nth-of-type(3),
+.leva-container[data-active-tab="advanced"] > div > div > div:nth-of-type(4),
+.leva-container[data-active-tab="advanced"] > div > div > div:nth-of-type(5),
+.leva-container[data-active-tab="advanced"] > div > div > div:nth-of-type(6),
+.leva-container[data-active-tab="advanced"] > div > div > div:nth-of-type(7) {
+  display: none !important;
+  height: 0 !important;
+  overflow: hidden !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
 /* Panel visibility animations */
 .panel-hidden {
   display: none !important;

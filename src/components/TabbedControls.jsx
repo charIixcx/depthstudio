@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Leva, levaStore } from 'leva';
+import { Leva } from 'leva';
 import './TabbedControls.css';
 
 const tabs = [
@@ -14,49 +14,6 @@ const tabs = [
 export default function TabbedControls({ isOpen, onToggle }) {
   const [activeTab, setActiveTab] = useState('master');
   const [isMinimized, setIsMinimized] = useState(false);
-
-  // Define which panels belong to which tabs
-  const getVisiblePanels = (tabId) => {
-    const tabPanelMap = {
-      'master': ['🎨 Master'],
-      'effects': ['🎬 Post Processing'],
-      'surface': ['🎨 Surface'],
-      'environment': ['🌍 Environment', '📷 Camera', '🎭 Layers'],
-      'audio': ['🎵 Audio Settings'],
-      'advanced': ['⚙️ Performance']
-    };
-    return tabPanelMap[tabId] || [];
-  };
-
-  // Collapse/expand panels based on active tab using Leva store
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const visiblePanels = getVisiblePanels(activeTab);
-    const allPanels = [
-      '🎨 Master',
-      '🎬 Post Processing',
-      '🎨 Surface',
-      '🌍 Environment',
-      '📷 Camera',
-      '🎭 Layers',
-      '🎵 Audio Settings',
-      '⚙️ Performance'
-    ];
-
-    // Use Leva's store to collapse/expand folders
-    try {
-      allPanels.forEach(panelName => {
-        const shouldShow = visiblePanels.includes(panelName);
-        // Set the folder collapsed state
-        // Leva's setValueAtPath can control folder collapsed state
-        levaStore.setValueAtPath(`${panelName}.__collapsed`, !shouldShow, false);
-      });
-    } catch (error) {
-      // If store manipulation fails, fall back to CSS
-      console.log('Using CSS fallback for panel visibility');
-    }
-  }, [activeTab, isOpen]);
 
   if (!isOpen) {
     return (
