@@ -15,7 +15,7 @@ export const AnimatedPanel = ({ children }) => {
   );
 };
 
-// Animated file upload zone with hover effects
+// Animated file upload zone with modern glassmorphism
 export const AnimatedDropZone = ({ onFileSelect, hasFile, label = 'Drop or click to upload', top = '20px', left = '20px', inputId = 'file-input' }) => {
   const [isDragging, setIsDragging] = useState(false);
 
@@ -48,7 +48,7 @@ export const AnimatedDropZone = ({ onFileSelect, hasFile, label = 'Drop or click
     <motion.div
       initial={{ y: -20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.5, delay: 0.2 }}
+      transition={{ duration: 0.5, delay: 0.2, type: 'spring', stiffness: 100 }}
       style={{
         position: 'fixed',
         top,
@@ -61,44 +61,62 @@ export const AnimatedDropZone = ({ onFileSelect, hasFile, label = 'Drop or click
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        whileHover={{ scale: 1.03 }}
-        whileTap={{ scale: 0.97 }}
+        whileHover={{ scale: 1.02, y: -2 }}
+        whileTap={{ scale: 0.98 }}
         animate={{
           backgroundColor: isDragging 
-            ? 'rgba(100, 200, 255, 0.2)' 
+            ? 'rgba(99, 102, 241, 0.15)' 
             : hasFile 
-            ? 'rgba(80, 250, 123, 0.15)' 
-            : 'rgba(40, 42, 54, 0.85)',
+            ? 'rgba(16, 185, 129, 0.15)' 
+            : 'rgba(26, 29, 38, 0.7)',
           borderColor: isDragging 
-            ? '#64C8FF' 
+            ? 'rgba(99, 102, 241, 0.5)' 
             : hasFile 
-            ? '#50FA7B' 
-            : '#6272A4',
+            ? 'rgba(16, 185, 129, 0.5)' 
+            : 'rgba(241, 243, 249, 0.12)',
+          boxShadow: isDragging
+            ? '0 8px 32px rgba(99, 102, 241, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
+            : hasFile
+            ? '0 8px 32px rgba(16, 185, 129, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.05)'
+            : '0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05)'
         }}
         style={{
           display: 'block',
-          padding: '20px 30px',
-          borderRadius: '16px',
+          padding: '1.25rem 1.875rem',
+          borderRadius: '1rem',
           border: '2px dashed',
           cursor: 'pointer',
-          backdropFilter: 'blur(10px)',
-          color: '#F8F8F2',
-          fontFamily: 'system-ui, -apple-system, sans-serif',
-          fontSize: '14px',
-          fontWeight: '500',
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+          backdropFilter: 'blur(20px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+          color: 'var(--text-primary)',
+          fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", system-ui, sans-serif',
+          fontSize: '0.875rem',
+          fontWeight: '600',
           userSelect: 'none',
+          position: 'relative',
+          overflow: 'hidden',
         }}
       >
         <motion.div
           initial={{ rotate: 0 }}
-          animate={{ rotate: isDragging ? 5 : 0 }}
-          style={{ display: 'flex', alignItems: 'center', gap: '10px' }}
+          animate={{ 
+            rotate: isDragging ? [0, -3, 3, -3, 0] : 0,
+            scale: isDragging ? 1.05 : 1
+          }}
+          transition={{ duration: 0.3 }}
+          style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', position: 'relative', zIndex: 1 }}
         >
-          <span style={{ fontSize: '20px' }}>
-            {hasFile ? '✓' : '📁'}
-          </span>
-          <span>
+          <motion.span 
+            style={{ fontSize: '1.5rem' }}
+            animate={{ 
+              rotate: isDragging ? 360 : 0,
+              scale: hasFile ? [1, 1.2, 1] : 1
+            }}
+            transition={{ duration: 0.5 }}
+          >
+            {hasFile ? '✅' : isDragging ? '📥' : '📁'}
+          </motion.span>
+          <span style={{ letterSpacing: '0.01em' }}>
             {isDragging 
               ? 'Drop image here' 
               : hasFile 
@@ -106,6 +124,20 @@ export const AnimatedDropZone = ({ onFileSelect, hasFile, label = 'Drop or click
               : label}
           </span>
         </motion.div>
+        
+        {/* Gradient overlay on hover */}
+        <motion.div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(168, 85, 247, 0.1) 100%)',
+            opacity: 0,
+            pointerEvents: 'none'
+          }}
+          whileHover={{ opacity: 1 }}
+          transition={{ duration: 0.3 }}
+        />
+        
         <input
           id={inputId}
           type="file"
@@ -118,60 +150,65 @@ export const AnimatedDropZone = ({ onFileSelect, hasFile, label = 'Drop or click
   );
 };
 
-// Animated help overlay with keyboard shortcuts
+// Modern help overlay with enhanced glassmorphism
 export const AnimatedHelpOverlay = ({ isOpen, onClose }) => {
   const shortcuts = [
-    { key: 'Space', action: 'Toggle audio playback' },
-    { key: 'F', action: 'Toggle fullscreen' },
-    { key: 'R', action: 'Reset camera position' },
-    { key: 'H', action: 'Toggle this help menu' },
-    { key: 'S', action: 'Save current preset' },
-    { key: 'E', action: 'Export screenshot' },
-    { key: '1-9', action: 'Quick switch shader modes' },
-    { key: '←→', action: 'Adjust effect intensity' },
+    { key: 'Space', action: 'Toggle audio playback', icon: '🎵' },
+    { key: 'F', action: 'Toggle fullscreen', icon: '⛶' },
+    { key: 'R', action: 'Reset camera position', icon: '📹' },
+    { key: 'H', action: 'Toggle this help menu', icon: '❓' },
+    { key: 'S', action: 'Save current preset', icon: '💾' },
+    { key: 'E', action: 'Export screenshot', icon: '📸' },
+    { key: '1-9', action: 'Quick switch shader modes', icon: '🎨' },
+    { key: '←→', action: 'Adjust effect intensity', icon: '⚡' },
   ];
 
   return (
     <AnimatePresence>
       {isOpen && (
         <>
-          {/* Backdrop */}
+          {/* Modern backdrop with blur */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
             onClick={onClose}
             style={{
               position: 'fixed',
               inset: 0,
-              backgroundColor: 'rgba(0, 0, 0, 0.7)',
-              backdropFilter: 'blur(8px)',
+              backgroundColor: 'rgba(10, 11, 15, 0.8)',
+              backdropFilter: 'blur(12px) saturate(120%)',
+              WebkitBackdropFilter: 'blur(12px) saturate(120%)',
               zIndex: 9998,
             }}
           />
 
-          {/* Help panel */}
+          {/* Modern help panel */}
           <motion.div
-            initial={{ scale: 0.8, opacity: 0, y: 50 }}
+            initial={{ scale: 0.9, opacity: 0, y: 30 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0.8, opacity: 0, y: 50 }}
+            exit={{ scale: 0.9, opacity: 0, y: 30 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
             style={{
               position: 'fixed',
               top: '50%',
               left: '50%',
               transform: 'translate(-50%, -50%)',
-              backgroundColor: 'rgba(40, 42, 54, 0.95)',
-              borderRadius: '24px',
-              padding: '40px',
-              maxWidth: '600px',
+              background: 'linear-gradient(135deg, rgba(26, 29, 38, 0.95) 0%, rgba(18, 20, 26, 0.95) 100%)',
+              borderRadius: 'var(--radius-xl)',
+              padding: 'var(--space-2xl)',
+              maxWidth: '650px',
               width: '90%',
-              boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)',
-              border: '1px solid rgba(98, 114, 164, 0.3)',
-              backdropFilter: 'blur(20px)',
+              maxHeight: '85vh',
+              overflowY: 'auto',
+              boxShadow: 'var(--shadow-2xl), inset 0 1px 0 rgba(255, 255, 255, 0.08)',
+              border: '1px solid var(--border-default)',
+              backdropFilter: 'blur(24px) saturate(180%)',
+              WebkitBackdropFilter: 'blur(24px) saturate(180%)',
               zIndex: 9999,
-              color: '#F8F8F2',
-              fontFamily: 'system-ui, -apple-system, sans-serif',
+              color: 'var(--text-primary)',
+              fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", system-ui, sans-serif',
             }}
           >
             <motion.div
@@ -180,21 +217,23 @@ export const AnimatedHelpOverlay = ({ isOpen, onClose }) => {
               transition={{ delay: 0.1 }}
             >
               <h2 style={{ 
-                margin: '0 0 10px 0', 
-                fontSize: '28px', 
+                margin: '0 0 var(--space-sm) 0', 
+                fontSize: '2rem', 
                 fontWeight: '700',
-                background: 'linear-gradient(135deg, #64C8FF, #FF79C6)',
+                background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-purple))',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
+                letterSpacing: '-0.02em',
               }}>
                 2.5D Depth Studio
               </h2>
               <p style={{ 
-                margin: '0 0 30px 0', 
-                color: '#6272A4', 
-                fontSize: '14px',
+                margin: '0 0 var(--space-2xl) 0', 
+                color: 'var(--text-secondary)', 
+                fontSize: '0.9375rem',
+                lineHeight: '1.6',
               }}>
-                Interactive audio-reactive depth visualization
+                Interactive audio-reactive depth visualization tool for creating stunning 3D effects
               </p>
             </motion.div>
 
@@ -204,43 +243,58 @@ export const AnimatedHelpOverlay = ({ isOpen, onClose }) => {
               transition={{ delay: 0.2 }}
             >
               <h3 style={{ 
-                fontSize: '16px', 
-                fontWeight: '600', 
-                marginBottom: '15px',
-                color: '#BD93F9',
+                fontSize: '1.125rem', 
+                fontWeight: '700', 
+                marginBottom: 'var(--space-lg)',
+                color: 'var(--text-primary)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 'var(--space-sm)',
               }}>
+                <span style={{ fontSize: '1.5rem' }}>⌨️</span>
                 Keyboard Shortcuts
               </h3>
-              <div style={{ display: 'grid', gap: '12px' }}>
+              <div style={{ display: 'grid', gap: 'var(--space-md)' }}>
                 {shortcuts.map((shortcut, index) => (
                   <motion.div
                     key={shortcut.key}
                     initial={{ x: -20, opacity: 0 }}
                     animate={{ x: 0, opacity: 1 }}
-                    transition={{ delay: 0.3 + index * 0.05 }}
+                    transition={{ delay: 0.3 + index * 0.05, type: 'spring', stiffness: 300 }}
+                    whileHover={{ x: 4, backgroundColor: 'rgba(99, 102, 241, 0.08)' }}
                     style={{
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '15px',
+                      gap: 'var(--space-lg)',
+                      padding: 'var(--space-md)',
+                      borderRadius: 'var(--radius-md)',
+                      background: 'rgba(255, 255, 255, 0.03)',
+                      border: '1px solid var(--border-subtle)',
+                      transition: 'all var(--transition-base)',
                     }}
                   >
+                    <span style={{ fontSize: '1.25rem', flexShrink: 0 }}>{shortcut.icon}</span>
                     <kbd style={{
-                      backgroundColor: 'rgba(98, 114, 164, 0.2)',
-                      border: '1px solid rgba(98, 114, 164, 0.4)',
-                      borderRadius: '6px',
-                      padding: '6px 12px',
-                      fontSize: '13px',
-                      fontWeight: '600',
-                      minWidth: '70px',
+                      background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(168, 85, 247, 0.15) 100%)',
+                      border: '1px solid var(--accent-primary)',
+                      borderRadius: 'var(--radius-sm)',
+                      padding: 'var(--space-sm) var(--space-md)',
+                      fontSize: '0.8125rem',
+                      fontWeight: '700',
+                      minWidth: '75px',
                       textAlign: 'center',
-                      color: '#8BE9FD',
-                      fontFamily: 'monospace',
+                      color: 'var(--accent-primary)',
+                      fontFamily: 'SF Mono, Monaco, monospace',
+                      letterSpacing: '0.05em',
+                      boxShadow: '0 2px 8px rgba(99, 102, 241, 0.2)',
+                      flexShrink: 0,
                     }}>
                       {shortcut.key}
                     </kbd>
                     <span style={{ 
-                      fontSize: '14px', 
-                      color: '#F8F8F2',
+                      fontSize: '0.875rem', 
+                      color: 'var(--text-secondary)',
+                      lineHeight: '1.5',
                     }}>
                       {shortcut.action}
                     </span>
@@ -252,25 +306,41 @@ export const AnimatedHelpOverlay = ({ isOpen, onClose }) => {
             <motion.button
               initial={{ y: 10, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.7 }}
-              whileHover={{ scale: 1.05, backgroundColor: 'rgba(98, 114, 164, 0.3)' }}
-              whileTap={{ scale: 0.95 }}
+              transition={{ delay: 0.8 }}
+              whileHover={{ 
+                scale: 1.02,
+                background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(168, 85, 247, 0.2) 100%)',
+              }}
+              whileTap={{ scale: 0.98 }}
               onClick={onClose}
               style={{
-                marginTop: '30px',
+                marginTop: 'var(--space-xl)',
                 width: '100%',
-                padding: '14px',
-                backgroundColor: 'rgba(98, 114, 164, 0.2)',
-                border: '1px solid rgba(98, 114, 164, 0.4)',
-                borderRadius: '12px',
-                color: '#F8F8F2',
-                fontSize: '14px',
-                fontWeight: '600',
+                padding: 'var(--space-lg)',
+                background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(168, 85, 247, 0.15) 100%)',
+                border: '1px solid var(--accent-primary)',
+                borderRadius: 'var(--radius-lg)',
+                color: 'var(--text-primary)',
+                fontSize: '0.9375rem',
+                fontWeight: '700',
                 cursor: 'pointer',
-                transition: 'all 0.2s',
+                transition: 'all var(--transition-base)',
+                boxShadow: '0 4px 16px rgba(99, 102, 241, 0.2)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 'var(--space-sm)',
               }}
             >
-              Close (ESC)
+              <span>Close</span>
+              <kbd style={{
+                background: 'rgba(255, 255, 255, 0.1)',
+                padding: '0.25rem 0.5rem',
+                borderRadius: 'var(--radius-sm)',
+                fontSize: '0.75rem',
+                fontFamily: 'SF Mono, Monaco, monospace',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+              }}>ESC</kbd>
             </motion.button>
           </motion.div>
         </>
@@ -279,60 +349,82 @@ export const AnimatedHelpOverlay = ({ isOpen, onClose }) => {
   );
 };
 
-// Animated preset card component
+// Modern preset card with enhanced glassmorphism
 export const AnimatedPresetCard = ({ preset, onLoad, onDelete, index }) => {
   const [isHovering, setIsHovering] = useState(false);
 
   return (
     <motion.div
-      initial={{ scale: 0, opacity: 0 }}
-      animate={{ scale: 1, opacity: 1 }}
-      exit={{ scale: 0, opacity: 0 }}
+      initial={{ scale: 0, opacity: 0, y: 20 }}
+      animate={{ scale: 1, opacity: 1, y: 0 }}
+      exit={{ scale: 0, opacity: 0, y: 20 }}
       transition={{ 
-        delay: index * 0.05,
+        delay: index * 0.06,
         type: 'spring',
         damping: 20,
         stiffness: 300,
       }}
-      whileHover={{ scale: 1.05, y: -5 }}
+      whileHover={{ scale: 1.03, y: -4 }}
       onHoverStart={() => setIsHovering(true)}
       onHoverEnd={() => setIsHovering(false)}
       style={{
-        backgroundColor: 'rgba(68, 71, 90, 0.6)',
-        borderRadius: '12px',
-        padding: '16px',
+        background: 'linear-gradient(135deg, rgba(26, 29, 38, 0.6) 0%, rgba(18, 20, 26, 0.6) 100%)',
+        borderRadius: 'var(--radius-lg)',
+        padding: 'var(--space-lg)',
         cursor: 'pointer',
-        border: '1px solid rgba(98, 114, 164, 0.3)',
-        backdropFilter: 'blur(10px)',
+        border: '1px solid var(--border-default)',
+        backdropFilter: 'blur(12px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(12px) saturate(180%)',
         position: 'relative',
         overflow: 'hidden',
+        boxShadow: isHovering 
+          ? '0 8px 24px rgba(99, 102, 241, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.08)'
+          : '0 4px 12px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+        transition: 'all var(--transition-base)',
       }}
     >
       <motion.div
-        animate={{ opacity: isHovering ? 0.1 : 0 }}
+        animate={{ opacity: isHovering ? 0.12 : 0 }}
+        transition={{ duration: 0.3 }}
         style={{
           position: 'absolute',
           inset: 0,
-          background: 'linear-gradient(135deg, #64C8FF, #FF79C6)',
+          background: 'linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-purple) 100%)',
+          pointerEvents: 'none',
         }}
       />
       
       <div style={{ position: 'relative', zIndex: 1 }}>
         <div onClick={() => onLoad(preset)}>
           <h4 style={{ 
-            margin: '0 0 8px 0', 
-            fontSize: '16px',
-            color: '#F8F8F2',
-            fontWeight: '600',
+            margin: '0 0 var(--space-sm) 0', 
+            fontSize: '1.0625rem',
+            color: 'var(--text-primary)',
+            fontWeight: '700',
+            letterSpacing: '-0.01em',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 'var(--space-sm)',
           }}>
+            <span style={{ fontSize: '1.25rem' }}>💾</span>
             {preset.name}
           </h4>
           <p style={{ 
             margin: 0, 
-            fontSize: '12px',
-            color: '#6272A4',
+            fontSize: '0.8125rem',
+            color: 'var(--text-tertiary)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 'var(--space-xs)',
           }}>
-            {new Date(preset.timestamp).toLocaleDateString()}
+            <span>🕒</span>
+            {new Date(preset.timestamp).toLocaleDateString('en-US', { 
+              month: 'short', 
+              day: 'numeric', 
+              year: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            })}
           </p>
         </div>
         
@@ -342,7 +434,10 @@ export const AnimatedPresetCard = ({ preset, onLoad, onDelete, index }) => {
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.8 }}
-              whileHover={{ scale: 1.1, backgroundColor: 'rgba(255, 85, 85, 0.3)' }}
+              whileHover={{ 
+                scale: 1.15,
+                background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.3) 0%, rgba(220, 38, 38, 0.3) 100%)',
+              }}
               whileTap={{ scale: 0.9 }}
               onClick={(e) => {
                 e.stopPropagation();
@@ -350,20 +445,22 @@ export const AnimatedPresetCard = ({ preset, onLoad, onDelete, index }) => {
               }}
               style={{
                 position: 'absolute',
-                top: '12px',
-                right: '12px',
-                width: '28px',
-                height: '28px',
-                borderRadius: '50%',
-                backgroundColor: 'rgba(255, 85, 85, 0.2)',
-                border: '1px solid rgba(255, 85, 85, 0.4)',
-                color: '#FF5555',
-                fontSize: '16px',
+                top: 'var(--space-md)',
+                right: 'var(--space-md)',
+                width: '32px',
+                height: '32px',
+                borderRadius: 'var(--radius-md)',
+                background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(220, 38, 38, 0.2) 100%)',
+                border: '1px solid var(--accent-danger)',
+                color: 'var(--accent-danger)',
+                fontSize: '1.125rem',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 padding: 0,
+                transition: 'all var(--transition-base)',
+                boxShadow: '0 2px 8px rgba(239, 68, 68, 0.3)',
               }}
             >
               ×
@@ -513,20 +610,40 @@ export const AnimatedLoader = ({ text = 'Loading...' }) => {
   );
 };
 
-// Toast notification
+// Modern toast notification with glassmorphism
 export const AnimatedToast = ({ message, type = 'info', isVisible, onClose }) => {
   const colors = {
-    success: { bg: '#50FA7B', text: '#282A36' },
-    error: { bg: '#FF5555', text: '#F8F8F2' },
-    info: { bg: '#8BE9FD', text: '#282A36' },
-    warning: { bg: '#FFB86C', text: '#282A36' },
+    success: { 
+      bg: 'linear-gradient(135deg, rgba(16, 185, 129, 0.9) 0%, rgba(5, 150, 105, 0.9) 100%)', 
+      text: '#ffffff',
+      border: 'rgba(16, 185, 129, 0.5)',
+      icon: '✅'
+    },
+    error: { 
+      bg: 'linear-gradient(135deg, rgba(239, 68, 68, 0.9) 0%, rgba(220, 38, 38, 0.9) 100%)', 
+      text: '#ffffff',
+      border: 'rgba(239, 68, 68, 0.5)',
+      icon: '❌'
+    },
+    info: { 
+      bg: 'linear-gradient(135deg, rgba(59, 130, 246, 0.9) 0%, rgba(37, 99, 235, 0.9) 100%)', 
+      text: '#ffffff',
+      border: 'rgba(59, 130, 246, 0.5)',
+      icon: 'ℹ️'
+    },
+    warning: { 
+      bg: 'linear-gradient(135deg, rgba(245, 158, 11, 0.9) 0%, rgba(217, 119, 6, 0.9) 100%)', 
+      text: '#ffffff',
+      border: 'rgba(245, 158, 11, 0.5)',
+      icon: '⚠️'
+    },
   };
 
   const style = colors[type] || colors.info;
 
   useEffect(() => {
     if (isVisible) {
-      const timer = setTimeout(onClose, 3000);
+      const timer = setTimeout(onClose, 4000);
       return () => clearTimeout(timer);
     }
   }, [isVisible, onClose]);
@@ -535,43 +652,76 @@ export const AnimatedToast = ({ message, type = 'info', isVisible, onClose }) =>
     <AnimatePresence>
       {isVisible && (
         <motion.div
-          initial={{ y: -100, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          exit={{ y: -100, opacity: 0 }}
-          transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+          initial={{ y: -100, opacity: 0, scale: 0.9 }}
+          animate={{ y: 0, opacity: 1, scale: 1 }}
+          exit={{ y: -100, opacity: 0, scale: 0.9 }}
+          transition={{ type: 'spring', damping: 20, stiffness: 300 }}
           style={{
             position: 'fixed',
-            top: '20px',
+            top: 'var(--space-lg)',
             left: '50%',
             transform: 'translateX(-50%)',
-            backgroundColor: style.bg,
+            background: style.bg,
             color: style.text,
-            padding: '16px 24px',
-            borderRadius: '12px',
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+            padding: '1rem 1.5rem',
+            borderRadius: 'var(--radius-lg)',
+            boxShadow: '0 10px 40px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
+            border: `1px solid ${style.border}`,
+            backdropFilter: 'blur(12px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(12px) saturate(180%)',
             zIndex: 10001,
-            fontFamily: 'system-ui, -apple-system, sans-serif',
-            fontSize: '14px',
+            fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", system-ui, sans-serif',
+            fontSize: '0.875rem',
             fontWeight: '600',
-            maxWidth: '400px',
+            maxWidth: '500px',
+            minWidth: '300px',
             display: 'flex',
             alignItems: 'center',
-            gap: '10px',
+            gap: 'var(--space-md)',
+            overflow: 'hidden',
           }}
         >
-          <span>{message}</span>
+          {/* Background shine effect */}
+          <motion.div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              background: 'linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.1) 50%, transparent 100%)',
+              pointerEvents: 'none',
+            }}
+            animate={{ x: ['-100%', '200%'] }}
+            transition={{ duration: 2, repeat: Infinity, ease: 'linear', repeatDelay: 1 }}
+          />
+          
+          <motion.span
+            style={{ fontSize: '1.25rem', flexShrink: 0 }}
+            animate={{ scale: [1, 1.2, 1] }}
+            transition={{ duration: 0.5, repeat: Infinity, repeatDelay: 2 }}
+          >
+            {style.icon}
+          </motion.span>
+          
+          <span style={{ flex: 1, letterSpacing: '0.01em' }}>{message}</span>
+          
           <motion.button
-            whileHover={{ scale: 1.1 }}
+            whileHover={{ scale: 1.15, rotate: 90 }}
             whileTap={{ scale: 0.9 }}
             onClick={onClose}
             style={{
-              background: 'none',
-              border: 'none',
+              background: 'rgba(255, 255, 255, 0.2)',
+              border: '1px solid rgba(255, 255, 255, 0.3)',
+              borderRadius: '50%',
+              width: '28px',
+              height: '28px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
               color: 'inherit',
-              fontSize: '18px',
+              fontSize: '1.125rem',
               cursor: 'pointer',
               padding: 0,
-              marginLeft: '10px',
+              flexShrink: 0,
+              transition: 'all 0.2s ease',
             }}
           >
             ×
@@ -802,35 +952,58 @@ export const RecordingIndicator = ({ isRecording, duration }) => {
   );
 };
 
-// FPS Counter
+// Modern FPS Counter with dynamic color and animation
 export const FPSCounter = ({ fps }) => {
   const getColor = () => {
-    if (fps >= 50) return '#50FA7B';
-    if (fps >= 30) return '#FFB86C';
-    return '#FF5555';
+    if (fps >= 55) return 'var(--accent-success)';
+    if (fps >= 30) return 'var(--accent-warning)';
+    return 'var(--accent-danger)';
+  };
+
+  const getGlow = () => {
+    if (fps >= 55) return '0 0 12px rgba(16, 185, 129, 0.4)';
+    if (fps >= 30) return '0 0 12px rgba(245, 158, 11, 0.4)';
+    return '0 0 12px rgba(239, 68, 68, 0.4)';
   };
 
   return (
     <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
+      initial={{ opacity: 0, x: -20 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ delay: 0.5 }}
       style={{
         position: 'fixed',
-        top: '200px',
-        left: '20px',
-        backgroundColor: 'rgba(40, 42, 54, 0.85)',
-        borderRadius: '8px',
-        padding: '8px 12px',
-        backdropFilter: 'blur(10px)',
-        border: '1px solid rgba(98, 114, 164, 0.3)',
+        bottom: 'var(--space-lg)',
+        left: 'var(--space-lg)',
+        background: 'linear-gradient(135deg, rgba(26, 29, 38, 0.85) 0%, rgba(18, 20, 26, 0.85) 100%)',
+        borderRadius: 'var(--radius-md)',
+        padding: 'var(--space-sm) var(--space-md)',
+        backdropFilter: 'blur(12px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(12px) saturate(180%)',
+        border: `1px solid ${getColor()}`,
         zIndex: 1000,
-        fontFamily: 'monospace',
-        fontSize: '12px',
-        fontWeight: '600',
+        fontFamily: 'SF Mono, Monaco, monospace',
+        fontSize: '0.8125rem',
+        fontWeight: '700',
         color: getColor(),
+        boxShadow: getGlow(),
+        display: 'flex',
+        alignItems: 'center',
+        gap: 'var(--space-xs)',
+        minWidth: '70px',
       }}
     >
-      {fps} FPS
+      <motion.span
+        animate={{ 
+          scale: fps < 30 ? [1, 1.2, 1] : 1,
+          rotate: fps < 30 ? [0, 5, -5, 0] : 0
+        }}
+        transition={{ duration: 0.5, repeat: fps < 30 ? Infinity : 0 }}
+        style={{ fontSize: '1rem' }}
+      >
+        {fps >= 55 ? '🟢' : fps >= 30 ? '🟡' : '🔴'}
+      </motion.span>
+      <span>{fps} FPS</span>
     </motion.div>
   );
 };

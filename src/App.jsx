@@ -481,129 +481,170 @@ export default function App() {
         inputId="depth-file-input"
       />
 
-      {/* Example images quick selector */}
+      {/* Modern example images quick selector */}
       <div style={{
         position: 'fixed',
-        top: '200px',
-        left: '20px',
+        top: 'var(--space-lg)',
+        left: 'var(--space-lg)',
         zIndex: 1000,
         display: 'flex',
         flexDirection: 'column',
-        gap: '8px',
+        gap: 'var(--space-sm)',
       }}>
         <div style={{
-          backgroundColor: 'rgba(40, 42, 54, 0.95)',
-          backdropFilter: 'blur(20px)',
-          borderRadius: '12px',
-          padding: '12px',
-          border: '1px solid rgba(98, 114, 164, 0.3)',
-          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)',
+          background: 'linear-gradient(135deg, rgba(26, 29, 38, 0.85) 0%, rgba(18, 20, 26, 0.85) 100%)',
+          backdropFilter: 'blur(20px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+          borderRadius: 'var(--radius-lg)',
+          padding: 'var(--space-md)',
+          border: '1px solid var(--border-default)',
+          boxShadow: 'var(--shadow-lg), inset 0 1px 0 rgba(255, 255, 255, 0.05)',
         }}>
           <div style={{
-            fontSize: '11px',
-            fontWeight: '600',
-            color: '#BD93F9',
-            marginBottom: '8px',
+            fontSize: '0.6875rem',
+            fontWeight: '700',
+            color: 'var(--accent-purple)',
+            marginBottom: 'var(--space-sm)',
             textTransform: 'uppercase',
-            letterSpacing: '0.5px',
+            letterSpacing: '0.08em',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 'var(--space-xs)',
           }}>
-            📷 Examples
+            <span style={{ fontSize: '1rem' }}>📷</span>
+            Examples
           </div>
           <button
             onClick={() => loadExampleImages('bunny')}
             style={{
               width: '100%',
-              padding: '8px 12px',
-              backgroundColor: 'rgba(98, 114, 164, 0.2)',
-              border: '1px solid rgba(98, 114, 164, 0.4)',
-              borderRadius: '8px',
-              color: '#F8F8F2',
-              fontSize: '13px',
-              fontWeight: '500',
+              padding: 'var(--space-sm) var(--space-md)',
+              background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(168, 85, 247, 0.1) 100%)',
+              border: '1px solid var(--border-default)',
+              borderRadius: 'var(--radius-md)',
+              color: 'var(--text-primary)',
+              fontSize: '0.8125rem',
+              fontWeight: '600',
               cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              marginBottom: '6px',
+              transition: 'all var(--transition-base)',
+              marginBottom: 'var(--space-xs)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 'var(--space-sm)',
             }}
             onMouseEnter={(e) => {
-              e.target.style.backgroundColor = 'rgba(98, 114, 164, 0.4)'
-              e.target.style.transform = 'translateX(2px)'
+              e.target.style.background = 'linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(168, 85, 247, 0.2) 100%)'
+              e.target.style.transform = 'translateX(3px)'
+              e.target.style.borderColor = 'var(--accent-primary)'
             }}
             onMouseLeave={(e) => {
-              e.target.style.backgroundColor = 'rgba(98, 114, 164, 0.2)'
+              e.target.style.background = 'linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(168, 85, 247, 0.1) 100%)'
               e.target.style.transform = 'translateX(0)'
+              e.target.style.borderColor = 'var(--border-default)'
             }}
           >
-            🐰 Bunny
+            <span style={{ fontSize: '1.125rem' }}>🐰</span>
+            <span>Bunny</span>
           </button>
           <button
             onClick={() => loadExampleImages('car')}
             style={{
               width: '100%',
-              padding: '8px 12px',
-              backgroundColor: 'rgba(98, 114, 164, 0.2)',
-              border: '1px solid rgba(98, 114, 164, 0.4)',
-              borderRadius: '8px',
-              color: '#F8F8F2',
-              fontSize: '13px',
-              fontWeight: '500',
+              padding: 'var(--space-sm) var(--space-md)',
+              background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(168, 85, 247, 0.1) 100%)',
+              border: '1px solid var(--border-default)',
+              borderRadius: 'var(--radius-md)',
+              color: 'var(--text-primary)',
+              fontSize: '0.8125rem',
+              fontWeight: '600',
               cursor: 'pointer',
-              transition: 'all 0.2s ease',
+              transition: 'all var(--transition-base)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 'var(--space-sm)',
             }}
             onMouseEnter={(e) => {
-              e.target.style.backgroundColor = 'rgba(98, 114, 164, 0.4)'
-              e.target.style.transform = 'translateX(2px)'
+              e.target.style.background = 'linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(168, 85, 247, 0.2) 100%)'
+              e.target.style.transform = 'translateX(3px)'
+              e.target.style.borderColor = 'var(--accent-primary)'
             }}
             onMouseLeave={(e) => {
-              e.target.style.backgroundColor = 'rgba(98, 114, 164, 0.2)'
+              e.target.style.background = 'linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(168, 85, 247, 0.1) 100%)'
               e.target.style.transform = 'translateX(0)'
+              e.target.style.borderColor = 'var(--border-default)'
             }}
           >
-            🚗 Car
+            <span style={{ fontSize: '1.125rem' }}>🚗</span>
+            <span>Car</span>
           </button>
         </div>
       </div>
 
-      {/* Preset manager panel */}
+      {/* Modern preset manager panel */}
       {showPresets && (
         <div style={{
           position: 'fixed',
           top: '50%',
-          right: '20px',
+          right: 'var(--space-lg)',
           transform: 'translateY(-50%)',
-          backgroundColor: 'rgba(40, 42, 54, 0.95)',
-          borderRadius: '20px',
-          padding: '24px',
-          maxWidth: '320px',
-          maxHeight: '80vh',
+          background: 'linear-gradient(135deg, rgba(26, 29, 38, 0.95) 0%, rgba(18, 20, 26, 0.95) 100%)',
+          borderRadius: 'var(--radius-xl)',
+          padding: 'var(--space-xl)',
+          maxWidth: '360px',
+          width: 'calc(100vw - 3rem)',
+          maxHeight: '85vh',
           overflowY: 'auto',
-          backdropFilter: 'blur(20px)',
-          border: '1px solid rgba(98, 114, 164, 0.3)',
-          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)',
+          backdropFilter: 'blur(24px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+          border: '1px solid var(--border-default)',
+          boxShadow: 'var(--shadow-2xl), inset 0 1px 0 rgba(255, 255, 255, 0.08)',
           zIndex: 1001,
         }}>
           <div style={{ 
             display: 'flex', 
             justifyContent: 'space-between', 
             alignItems: 'center',
-            marginBottom: '20px',
+            marginBottom: 'var(--space-lg)',
           }}>
             <h3 style={{ 
               margin: 0, 
-              fontSize: '20px',
+              fontSize: '1.5rem',
               fontWeight: '700',
-              color: '#F8F8F2',
+              color: 'var(--text-primary)',
+              letterSpacing: '-0.02em',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 'var(--space-sm)',
             }}>
+              <span>💾</span>
               Presets
             </h3>
             <button
               onClick={() => setShowPresets(false)}
               style={{
-                background: 'none',
-                border: 'none',
-                color: '#6272A4',
-                fontSize: '24px',
+                background: 'rgba(255, 255, 255, 0.08)',
+                border: '1px solid var(--border-default)',
+                borderRadius: 'var(--radius-md)',
+                color: 'var(--text-secondary)',
+                fontSize: '1.25rem',
+                width: '32px',
+                height: '32px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
                 cursor: 'pointer',
                 padding: 0,
+                transition: 'all var(--transition-base)',
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.background = 'rgba(239, 68, 68, 0.2)'
+                e.target.style.color = 'var(--accent-danger)'
+                e.target.style.borderColor = 'var(--accent-danger)'
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.background = 'rgba(255, 255, 255, 0.08)'
+                e.target.style.color = 'var(--text-secondary)'
+                e.target.style.borderColor = 'var(--border-default)'
               }}
             >
               ×
@@ -614,27 +655,44 @@ export default function App() {
             onClick={savePreset}
             style={{
               width: '100%',
-              padding: '12px',
-              backgroundColor: 'rgba(80, 250, 123, 0.2)',
-              border: '1px solid rgba(80, 250, 123, 0.4)',
-              borderRadius: '12px',
-              color: '#50FA7B',
-              fontSize: '14px',
-              fontWeight: '600',
+              padding: 'var(--space-md)',
+              background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(5, 150, 105, 0.15) 100%)',
+              border: '1px solid var(--accent-success)',
+              borderRadius: 'var(--radius-lg)',
+              color: 'var(--accent-success)',
+              fontSize: '0.9375rem',
+              fontWeight: '700',
               cursor: 'pointer',
-              marginBottom: '16px',
+              marginBottom: 'var(--space-lg)',
+              transition: 'all var(--transition-base)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 'var(--space-sm)',
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.background = 'linear-gradient(135deg, rgba(16, 185, 129, 0.25) 0%, rgba(5, 150, 105, 0.25) 100%)'
+              e.target.style.transform = 'translateY(-2px)'
+              e.target.style.boxShadow = '0 4px 16px rgba(16, 185, 129, 0.3)'
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.background = 'linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(5, 150, 105, 0.15) 100%)'
+              e.target.style.transform = 'translateY(0)'
+              e.target.style.boxShadow = 'none'
             }}
           >
-            + Save Current Settings
+            <span style={{ fontSize: '1.125rem' }}>➕</span>
+            Save Current Settings
           </button>
 
-          <div style={{ display: 'grid', gap: '12px' }}>
+          <div style={{ display: 'grid', gap: 'var(--space-md)' }}>
             {presets.length === 0 ? (
               <p style={{ 
-                color: '#6272A4', 
-                fontSize: '14px', 
+                color: 'var(--text-tertiary)', 
+                fontSize: '0.875rem', 
                 textAlign: 'center',
-                margin: '20px 0',
+                margin: 'var(--space-xl) 0',
+                lineHeight: '1.6',
               }}>
                 No saved presets
               </p>
@@ -653,67 +711,117 @@ export default function App() {
         </div>
       )}
 
-      {/* Action buttons */}
+      {/* Modern action buttons */}
       <div style={{
         position: 'fixed',
-        bottom: '20px',
-        right: '20px',
+        bottom: 'var(--space-lg)',
+        right: 'var(--space-lg)',
         display: 'flex',
-        gap: '12px',
+        gap: 'var(--space-md)',
         zIndex: 1000,
+        flexWrap: 'wrap',
+        justifyContent: 'flex-end',
       }}>
         <button
           onClick={() => setShowPresets(prev => !prev)}
           style={{
-            padding: '14px 20px',
-            backgroundColor: 'rgba(40, 42, 54, 0.85)',
-            border: '1px solid rgba(98, 114, 164, 0.3)',
-            borderRadius: '12px',
-            color: '#F8F8F2',
-            fontSize: '14px',
-            fontWeight: '600',
+            padding: 'var(--space-md) var(--space-lg)',
+            background: 'linear-gradient(135deg, rgba(26, 29, 38, 0.85) 0%, rgba(18, 20, 26, 0.85) 100%)',
+            border: '1px solid var(--border-default)',
+            borderRadius: 'var(--radius-lg)',
+            color: 'var(--text-primary)',
+            fontSize: '0.875rem',
+            fontWeight: '700',
             cursor: 'pointer',
-            backdropFilter: 'blur(10px)',
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+            backdropFilter: 'blur(12px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(12px) saturate(180%)',
+            boxShadow: 'var(--shadow-lg), inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+            transition: 'all var(--transition-base)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 'var(--space-sm)',
+          }}
+          onMouseEnter={(e) => {
+            e.target.style.transform = 'translateY(-3px)'
+            e.target.style.boxShadow = '0 8px 24px rgba(99, 102, 241, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05)'
+            e.target.style.borderColor = 'var(--accent-primary)'
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.transform = 'translateY(0)'
+            e.target.style.boxShadow = 'var(--shadow-lg), inset 0 1px 0 rgba(255, 255, 255, 0.05)'
+            e.target.style.borderColor = 'var(--border-default)'
           }}
         >
-          💾 Presets
+          <span style={{ fontSize: '1.125rem' }}>💾</span>
+          Presets
         </button>
         
         <button
           onClick={exportScreenshot}
           style={{
-            padding: '14px 20px',
-            backgroundColor: 'rgba(40, 42, 54, 0.85)',
-            border: '1px solid rgba(98, 114, 164, 0.3)',
-            borderRadius: '12px',
-            color: '#F8F8F2',
-            fontSize: '14px',
-            fontWeight: '600',
+            padding: 'var(--space-md) var(--space-lg)',
+            background: 'linear-gradient(135deg, rgba(26, 29, 38, 0.85) 0%, rgba(18, 20, 26, 0.85) 100%)',
+            border: '1px solid var(--border-default)',
+            borderRadius: 'var(--radius-lg)',
+            color: 'var(--text-primary)',
+            fontSize: '0.875rem',
+            fontWeight: '700',
             cursor: 'pointer',
-            backdropFilter: 'blur(10px)',
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+            backdropFilter: 'blur(12px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(12px) saturate(180%)',
+            boxShadow: 'var(--shadow-lg), inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+            transition: 'all var(--transition-base)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 'var(--space-sm)',
+          }}
+          onMouseEnter={(e) => {
+            e.target.style.transform = 'translateY(-3px)'
+            e.target.style.boxShadow = '0 8px 24px rgba(99, 102, 241, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05)'
+            e.target.style.borderColor = 'var(--accent-primary)'
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.transform = 'translateY(0)'
+            e.target.style.boxShadow = 'var(--shadow-lg), inset 0 1px 0 rgba(255, 255, 255, 0.05)'
+            e.target.style.borderColor = 'var(--border-default)'
           }}
         >
-          📸 Export
+          <span style={{ fontSize: '1.125rem' }}>📸</span>
+          Export
         </button>
         
         <button
           onClick={() => setShowHelp(true)}
           style={{
-            padding: '14px 20px',
-            backgroundColor: 'rgba(40, 42, 54, 0.85)',
-            border: '1px solid rgba(98, 114, 164, 0.3)',
-            borderRadius: '12px',
-            color: '#F8F8F2',
-            fontSize: '14px',
-            fontWeight: '600',
+            padding: 'var(--space-md) var(--space-lg)',
+            background: 'linear-gradient(135deg, rgba(26, 29, 38, 0.85) 0%, rgba(18, 20, 26, 0.85) 100%)',
+            border: '1px solid var(--border-default)',
+            borderRadius: 'var(--radius-lg)',
+            color: 'var(--text-primary)',
+            fontSize: '0.875rem',
+            fontWeight: '700',
             cursor: 'pointer',
-            backdropFilter: 'blur(10px)',
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+            backdropFilter: 'blur(12px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(12px) saturate(180%)',
+            boxShadow: 'var(--shadow-lg), inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+            transition: 'all var(--transition-base)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 'var(--space-sm)',
+          }}
+          onMouseEnter={(e) => {
+            e.target.style.transform = 'translateY(-3px)'
+            e.target.style.boxShadow = '0 8px 24px rgba(99, 102, 241, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05)'
+            e.target.style.borderColor = 'var(--accent-primary)'
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.transform = 'translateY(0)'
+            e.target.style.boxShadow = 'var(--shadow-lg), inset 0 1px 0 rgba(255, 255, 255, 0.05)'
+            e.target.style.borderColor = 'var(--border-default)'
           }}
         >
-          ❓ Help
+          <span style={{ fontSize: '1.125rem' }}>❓</span>
+          Help
         </button>
         
         <button
@@ -724,19 +832,35 @@ export default function App() {
             } catch {}
           }}
           style={{
-            padding: '14px 20px',
-            backgroundColor: 'rgba(255, 85, 85, 0.2)',
-            border: '1px solid rgba(255, 85, 85, 0.4)',
-            borderRadius: '12px',
-            color: '#FF5555',
-            fontSize: '14px',
-            fontWeight: '600',
+            padding: 'var(--space-md) var(--space-lg)',
+            background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(220, 38, 38, 0.15) 100%)',
+            border: '1px solid var(--accent-danger)',
+            borderRadius: 'var(--radius-lg)',
+            color: 'var(--accent-danger)',
+            fontSize: '0.875rem',
+            fontWeight: '700',
             cursor: 'pointer',
-            backdropFilter: 'blur(10px)',
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+            backdropFilter: 'blur(12px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(12px) saturate(180%)',
+            boxShadow: 'var(--shadow-lg), inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+            transition: 'all var(--transition-base)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 'var(--space-sm)',
+          }}
+          onMouseEnter={(e) => {
+            e.target.style.transform = 'translateY(-3px)'
+            e.target.style.background = 'linear-gradient(135deg, rgba(239, 68, 68, 0.25) 0%, rgba(220, 38, 38, 0.25) 100%)'
+            e.target.style.boxShadow = '0 8px 24px rgba(239, 68, 68, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05)'
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.transform = 'translateY(0)'
+            e.target.style.background = 'linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(220, 38, 38, 0.15) 100%)'
+            e.target.style.boxShadow = 'var(--shadow-lg), inset 0 1px 0 rgba(255, 255, 255, 0.05)'
           }}
         >
-          🔄 Reset
+          <span style={{ fontSize: '1.125rem' }}>🔄</span>
+          Reset
         </button>
       </div>
 
