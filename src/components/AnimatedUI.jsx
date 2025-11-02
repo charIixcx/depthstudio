@@ -15,7 +15,7 @@ export const AnimatedPanel = ({ children }) => {
   );
 };
 
-// Animated file upload zone with hover effects
+// Animated file upload zone with modern glassmorphism
 export const AnimatedDropZone = ({ onFileSelect, hasFile, label = 'Drop or click to upload', top = '20px', left = '20px', inputId = 'file-input' }) => {
   const [isDragging, setIsDragging] = useState(false);
 
@@ -48,7 +48,7 @@ export const AnimatedDropZone = ({ onFileSelect, hasFile, label = 'Drop or click
     <motion.div
       initial={{ y: -20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.5, delay: 0.2 }}
+      transition={{ duration: 0.5, delay: 0.2, type: 'spring', stiffness: 100 }}
       style={{
         position: 'fixed',
         top,
@@ -61,44 +61,62 @@ export const AnimatedDropZone = ({ onFileSelect, hasFile, label = 'Drop or click
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        whileHover={{ scale: 1.03 }}
-        whileTap={{ scale: 0.97 }}
+        whileHover={{ scale: 1.02, y: -2 }}
+        whileTap={{ scale: 0.98 }}
         animate={{
           backgroundColor: isDragging 
-            ? 'rgba(100, 200, 255, 0.2)' 
+            ? 'rgba(99, 102, 241, 0.15)' 
             : hasFile 
-            ? 'rgba(80, 250, 123, 0.15)' 
-            : 'rgba(40, 42, 54, 0.85)',
+            ? 'rgba(16, 185, 129, 0.15)' 
+            : 'rgba(26, 29, 38, 0.7)',
           borderColor: isDragging 
-            ? '#64C8FF' 
+            ? 'rgba(99, 102, 241, 0.5)' 
             : hasFile 
-            ? '#50FA7B' 
-            : '#6272A4',
+            ? 'rgba(16, 185, 129, 0.5)' 
+            : 'rgba(241, 243, 249, 0.12)',
+          boxShadow: isDragging
+            ? '0 8px 32px rgba(99, 102, 241, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
+            : hasFile
+            ? '0 8px 32px rgba(16, 185, 129, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.05)'
+            : '0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05)'
         }}
         style={{
           display: 'block',
-          padding: '20px 30px',
-          borderRadius: '16px',
+          padding: '1.25rem 1.875rem',
+          borderRadius: '1rem',
           border: '2px dashed',
           cursor: 'pointer',
-          backdropFilter: 'blur(10px)',
-          color: '#F8F8F2',
-          fontFamily: 'system-ui, -apple-system, sans-serif',
-          fontSize: '14px',
-          fontWeight: '500',
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+          backdropFilter: 'blur(20px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+          color: 'var(--text-primary)',
+          fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", system-ui, sans-serif',
+          fontSize: '0.875rem',
+          fontWeight: '600',
           userSelect: 'none',
+          position: 'relative',
+          overflow: 'hidden',
         }}
       >
         <motion.div
           initial={{ rotate: 0 }}
-          animate={{ rotate: isDragging ? 5 : 0 }}
-          style={{ display: 'flex', alignItems: 'center', gap: '10px' }}
+          animate={{ 
+            rotate: isDragging ? [0, -3, 3, -3, 0] : 0,
+            scale: isDragging ? 1.05 : 1
+          }}
+          transition={{ duration: 0.3 }}
+          style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', position: 'relative', zIndex: 1 }}
         >
-          <span style={{ fontSize: '20px' }}>
-            {hasFile ? '✓' : '📁'}
-          </span>
-          <span>
+          <motion.span 
+            style={{ fontSize: '1.5rem' }}
+            animate={{ 
+              rotate: isDragging ? 360 : 0,
+              scale: hasFile ? [1, 1.2, 1] : 1
+            }}
+            transition={{ duration: 0.5 }}
+          >
+            {hasFile ? '✅' : isDragging ? '📥' : '📁'}
+          </motion.span>
+          <span style={{ letterSpacing: '0.01em' }}>
             {isDragging 
               ? 'Drop image here' 
               : hasFile 
@@ -106,6 +124,20 @@ export const AnimatedDropZone = ({ onFileSelect, hasFile, label = 'Drop or click
               : label}
           </span>
         </motion.div>
+        
+        {/* Gradient overlay on hover */}
+        <motion.div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(168, 85, 247, 0.1) 100%)',
+            opacity: 0,
+            pointerEvents: 'none'
+          }}
+          whileHover={{ opacity: 1 }}
+          transition={{ duration: 0.3 }}
+        />
+        
         <input
           id={inputId}
           type="file"
@@ -513,20 +545,40 @@ export const AnimatedLoader = ({ text = 'Loading...' }) => {
   );
 };
 
-// Toast notification
+// Modern toast notification with glassmorphism
 export const AnimatedToast = ({ message, type = 'info', isVisible, onClose }) => {
   const colors = {
-    success: { bg: '#50FA7B', text: '#282A36' },
-    error: { bg: '#FF5555', text: '#F8F8F2' },
-    info: { bg: '#8BE9FD', text: '#282A36' },
-    warning: { bg: '#FFB86C', text: '#282A36' },
+    success: { 
+      bg: 'linear-gradient(135deg, rgba(16, 185, 129, 0.9) 0%, rgba(5, 150, 105, 0.9) 100%)', 
+      text: '#ffffff',
+      border: 'rgba(16, 185, 129, 0.5)',
+      icon: '✅'
+    },
+    error: { 
+      bg: 'linear-gradient(135deg, rgba(239, 68, 68, 0.9) 0%, rgba(220, 38, 38, 0.9) 100%)', 
+      text: '#ffffff',
+      border: 'rgba(239, 68, 68, 0.5)',
+      icon: '❌'
+    },
+    info: { 
+      bg: 'linear-gradient(135deg, rgba(59, 130, 246, 0.9) 0%, rgba(37, 99, 235, 0.9) 100%)', 
+      text: '#ffffff',
+      border: 'rgba(59, 130, 246, 0.5)',
+      icon: 'ℹ️'
+    },
+    warning: { 
+      bg: 'linear-gradient(135deg, rgba(245, 158, 11, 0.9) 0%, rgba(217, 119, 6, 0.9) 100%)', 
+      text: '#ffffff',
+      border: 'rgba(245, 158, 11, 0.5)',
+      icon: '⚠️'
+    },
   };
 
   const style = colors[type] || colors.info;
 
   useEffect(() => {
     if (isVisible) {
-      const timer = setTimeout(onClose, 3000);
+      const timer = setTimeout(onClose, 4000);
       return () => clearTimeout(timer);
     }
   }, [isVisible, onClose]);
@@ -535,43 +587,76 @@ export const AnimatedToast = ({ message, type = 'info', isVisible, onClose }) =>
     <AnimatePresence>
       {isVisible && (
         <motion.div
-          initial={{ y: -100, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          exit={{ y: -100, opacity: 0 }}
-          transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+          initial={{ y: -100, opacity: 0, scale: 0.9 }}
+          animate={{ y: 0, opacity: 1, scale: 1 }}
+          exit={{ y: -100, opacity: 0, scale: 0.9 }}
+          transition={{ type: 'spring', damping: 20, stiffness: 300 }}
           style={{
             position: 'fixed',
-            top: '20px',
+            top: 'var(--space-lg)',
             left: '50%',
             transform: 'translateX(-50%)',
-            backgroundColor: style.bg,
+            background: style.bg,
             color: style.text,
-            padding: '16px 24px',
-            borderRadius: '12px',
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+            padding: '1rem 1.5rem',
+            borderRadius: 'var(--radius-lg)',
+            boxShadow: '0 10px 40px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
+            border: `1px solid ${style.border}`,
+            backdropFilter: 'blur(12px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(12px) saturate(180%)',
             zIndex: 10001,
-            fontFamily: 'system-ui, -apple-system, sans-serif',
-            fontSize: '14px',
+            fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", system-ui, sans-serif',
+            fontSize: '0.875rem',
             fontWeight: '600',
-            maxWidth: '400px',
+            maxWidth: '500px',
+            minWidth: '300px',
             display: 'flex',
             alignItems: 'center',
-            gap: '10px',
+            gap: 'var(--space-md)',
+            overflow: 'hidden',
           }}
         >
-          <span>{message}</span>
+          {/* Background shine effect */}
+          <motion.div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              background: 'linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.1) 50%, transparent 100%)',
+              pointerEvents: 'none',
+            }}
+            animate={{ x: ['-100%', '200%'] }}
+            transition={{ duration: 2, repeat: Infinity, ease: 'linear', repeatDelay: 1 }}
+          />
+          
+          <motion.span
+            style={{ fontSize: '1.25rem', flexShrink: 0 }}
+            animate={{ scale: [1, 1.2, 1] }}
+            transition={{ duration: 0.5, repeat: Infinity, repeatDelay: 2 }}
+          >
+            {style.icon}
+          </motion.span>
+          
+          <span style={{ flex: 1, letterSpacing: '0.01em' }}>{message}</span>
+          
           <motion.button
-            whileHover={{ scale: 1.1 }}
+            whileHover={{ scale: 1.15, rotate: 90 }}
             whileTap={{ scale: 0.9 }}
             onClick={onClose}
             style={{
-              background: 'none',
-              border: 'none',
+              background: 'rgba(255, 255, 255, 0.2)',
+              border: '1px solid rgba(255, 255, 255, 0.3)',
+              borderRadius: '50%',
+              width: '28px',
+              height: '28px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
               color: 'inherit',
-              fontSize: '18px',
+              fontSize: '1.125rem',
               cursor: 'pointer',
               padding: 0,
-              marginLeft: '10px',
+              flexShrink: 0,
+              transition: 'all 0.2s ease',
             }}
           >
             ×
