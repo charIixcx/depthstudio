@@ -214,6 +214,10 @@
   padding: var(--space-md) var(--space-lg);
   background: rgba(0, 0, 0, 0.15);
   border-bottom: 1px solid var(--border-subtle);
+  gap: 10px;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.3);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .tab-button {
@@ -221,6 +225,14 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 6px;
+  padding: 14px 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 2px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  color: #8BE9FD;
+  font-size: 11px;
+  font-weight: 700;
   gap: 6px;
   padding: var(--space-md) var(--space-sm);
   background: rgba(255, 255, 255, 0.04);
@@ -232,9 +244,12 @@
   text-transform: uppercase;
   letter-spacing: 0.03em;
   cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   transition: all var(--transition-base);
   position: relative;
   overflow: hidden;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
   text-transform: uppercase;
   letter-spacing: 0.8px;
 }
@@ -245,6 +260,8 @@
   inset: 0;
   background: linear-gradient(
     135deg,
+    rgba(98, 114, 164, 0.25) 0%,
+    rgba(80, 250, 123, 0.25) 100%
     rgba(99, 102, 241, 0.15) 0%,
     rgba(168, 85, 247, 0.15) 100%
   );
@@ -257,6 +274,9 @@
 }
 
 .tab-button:hover {
+  transform: translateY(-3px);
+  border-color: rgba(139, 233, 253, 0.5);
+  box-shadow: 0 6px 20px rgba(139, 233, 253, 0.25);
   transform: translateY(-2px);
   border-color: var(--accent-primary);
   box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
@@ -266,12 +286,20 @@
 .tab-button.active {
   background: linear-gradient(
     135deg,
+    rgba(98, 114, 164, 0.5) 0%,
+    rgba(80, 250, 123, 0.4) 100%
     rgba(99, 102, 241, 0.2) 0%,
     rgba(168, 85, 247, 0.2) 100%
   );
+  border-color: rgba(80, 250, 123, 0.7);
+  color: #50FA7B;
   border-color: var(--accent-primary);
   color: var(--text-primary);
   box-shadow: 
+    0 6px 24px rgba(80, 250, 123, 0.4),
+    inset 0 2px 0 rgba(255, 255, 255, 0.2),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.2);
+  transform: translateY(-2px);
     0 4px 16px rgba(99, 102, 241, 0.25),
     inset 0 1px 0 rgba(255, 255, 255, 0.1);
   transform: translateY(-1px);
@@ -281,17 +309,58 @@
   opacity: 0;
 }
 
+.tab-button.active::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60%;
+  height: 3px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(80, 250, 123, 0.8) 50%,
+    transparent 100%
+  );
+  border-radius: 2px;
+}
+
 .tab-button.active .tab-icon {
   filter: drop-shadow(0 2px 8px var(--accent-primary));
 }
 
 .tab-icon {
+  font-size: 24px;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.4));
+  transition: transform 0.2s ease;
+}
+
+.tab-button:hover .tab-icon {
+  transform: scale(1.15);
+}
+
+.tab-button.active .tab-icon {
+  transform: scale(1.1);
+  animation: iconPulse 2s ease-in-out infinite;
+}
+
+@keyframes iconPulse {
+  0%, 100% {
+    transform: scale(1.1);
+  }
+  50% {
+    transform: scale(1.2);
+  }
   font-size: 1.375rem;
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
   transition: filter var(--transition-base);
 }
 
 .tab-label {
+  line-height: 1.2;
+  position: relative;
+  z-index: 1;
   line-height: 1;
 }
 
@@ -329,12 +398,22 @@
 
 /* Modern Tab Description with Accent */
 .tab-description {
+  padding: 14px 18px;
   padding: var(--space-md) var(--space-lg);
   background: linear-gradient(
     135deg,
+    rgba(139, 233, 253, 0.12) 0%,
+    rgba(80, 250, 123, 0.08) 100%
     rgba(99, 102, 241, 0.08) 0%,
     rgba(168, 85, 247, 0.05) 100%
   );
+  border-left: 4px solid rgba(139, 233, 253, 0.6);
+  border-radius: 10px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #8BE9FD;
+  margin-bottom: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   border-left: 3px solid var(--accent-primary);
   border-radius: var(--radius-md);
   font-size: 0.8125rem;
@@ -363,6 +442,7 @@
 .tab-description p {
   margin: 0;
   font-weight: 500;
+  font-weight: 500;
 }
 
 /* Leva Container with Modern Integration */
@@ -375,6 +455,129 @@
 
 .leva-container > div {
   background: transparent !important;
+}
+
+/* Tab-based panel visibility using CSS - targets panels by their order */
+/* Order: 0=Master, 1=PostProcessing, 2=Environment, 3=Camera, 4=Layers, 5=Audio, 6=Surface, 7=Performance */
+
+/* Hide all panels by default when specific tab is active */
+.leva-container[data-active-tab] > div > div > div {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+/* Master tab - show only panel order 0 (Master) */
+.leva-container[data-active-tab="master"] > div > div > div:nth-of-type(2),
+.leva-container[data-active-tab="master"] > div > div > div:nth-of-type(3),
+.leva-container[data-active-tab="master"] > div > div > div:nth-of-type(4),
+.leva-container[data-active-tab="master"] > div > div > div:nth-of-type(5),
+.leva-container[data-active-tab="master"] > div > div > div:nth-of-type(6),
+.leva-container[data-active-tab="master"] > div > div > div:nth-of-type(7),
+.leva-container[data-active-tab="master"] > div > div > div:nth-of-type(8) {
+  display: none !important;
+  height: 0 !important;
+  overflow: hidden !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Effects tab - show only panel order 1 (Post Processing) */
+.leva-container[data-active-tab="effects"] > div > div > div:nth-of-type(1),
+.leva-container[data-active-tab="effects"] > div > div > div:nth-of-type(3),
+.leva-container[data-active-tab="effects"] > div > div > div:nth-of-type(4),
+.leva-container[data-active-tab="effects"] > div > div > div:nth-of-type(5),
+.leva-container[data-active-tab="effects"] > div > div > div:nth-of-type(6),
+.leva-container[data-active-tab="effects"] > div > div > div:nth-of-type(7),
+.leva-container[data-active-tab="effects"] > div > div > div:nth-of-type(8) {
+  display: none !important;
+  height: 0 !important;
+  overflow: hidden !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Surface tab - show only panel order 6 (Surface) */
+.leva-container[data-active-tab="surface"] > div > div > div:nth-of-type(1),
+.leva-container[data-active-tab="surface"] > div > div > div:nth-of-type(2),
+.leva-container[data-active-tab="surface"] > div > div > div:nth-of-type(3),
+.leva-container[data-active-tab="surface"] > div > div > div:nth-of-type(4),
+.leva-container[data-active-tab="surface"] > div > div > div:nth-of-type(5),
+.leva-container[data-active-tab="surface"] > div > div > div:nth-of-type(6),
+.leva-container[data-active-tab="surface"] > div > div > div:nth-of-type(8) {
+  display: none !important;
+  height: 0 !important;
+  overflow: hidden !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Scene/Environment tab - show panels order 2,3,4 (Environment, Camera, Layers) */
+.leva-container[data-active-tab="environment"] > div > div > div:nth-of-type(1),
+.leva-container[data-active-tab="environment"] > div > div > div:nth-of-type(2),
+.leva-container[data-active-tab="environment"] > div > div > div:nth-of-type(6),
+.leva-container[data-active-tab="environment"] > div > div > div:nth-of-type(7),
+.leva-container[data-active-tab="environment"] > div > div > div:nth-of-type(8) {
+  display: none !important;
+  height: 0 !important;
+  overflow: hidden !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Audio tab - show only panel order 5 (Audio Settings) */
+.leva-container[data-active-tab="audio"] > div > div > div:nth-of-type(1),
+.leva-container[data-active-tab="audio"] > div > div > div:nth-of-type(2),
+.leva-container[data-active-tab="audio"] > div > div > div:nth-of-type(3),
+.leva-container[data-active-tab="audio"] > div > div > div:nth-of-type(4),
+.leva-container[data-active-tab="audio"] > div > div > div:nth-of-type(5),
+.leva-container[data-active-tab="audio"] > div > div > div:nth-of-type(7),
+.leva-container[data-active-tab="audio"] > div > div > div:nth-of-type(8) {
+  display: none !important;
+  height: 0 !important;
+  overflow: hidden !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Advanced tab - show only panel order 7 (Performance) */
+.leva-container[data-active-tab="advanced"] > div > div > div:nth-of-type(1),
+.leva-container[data-active-tab="advanced"] > div > div > div:nth-of-type(2),
+.leva-container[data-active-tab="advanced"] > div > div > div:nth-of-type(3),
+.leva-container[data-active-tab="advanced"] > div > div > div:nth-of-type(4),
+.leva-container[data-active-tab="advanced"] > div > div > div:nth-of-type(5),
+.leva-container[data-active-tab="advanced"] > div > div > div:nth-of-type(6),
+.leva-container[data-active-tab="advanced"] > div > div > div:nth-of-type(7) {
+  display: none !important;
+  height: 0 !important;
+  overflow: hidden !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Panel visibility animations */
+.panel-hidden {
+  display: none !important;
+  opacity: 0;
+  height: 0;
+  overflow: hidden;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.panel-visible {
+  display: block !important;
+  opacity: 1;
+  animation: fadeInPanel 0.3s ease;
+}
+
+@keyframes fadeInPanel {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Override Leva styles for 2025 aesthetic */
@@ -429,17 +632,24 @@
 .quick-tips {
   display: flex;
   align-items: flex-start;
+  gap: 10px;
+  padding: 14px 16px;
   gap: var(--space-md);
   padding: var(--space-md) var(--space-lg);
   background: linear-gradient(
     135deg,
+    rgba(255, 184, 108, 0.18) 0%,
+    rgba(255, 121, 198, 0.12) 100%
     rgba(245, 158, 11, 0.12) 0%,
     rgba(236, 72, 153, 0.08) 100%
   );
+  border-radius: 10px;
+  border: 1px solid rgba(255, 184, 108, 0.4);
   border-radius: var(--radius-md);
   border: 1px solid rgba(245, 158, 11, 0.2);
   margin-top: auto;
   animation: fadeInUp 0.4s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   position: relative;
   overflow: hidden;
 }
@@ -472,15 +682,24 @@
 }
 
 .tip-label {
+  font-size: 13px;
+  font-weight: 800;
+  color: #FFB86C;
   font-size: 0.75rem;
   font-weight: 700;
   color: var(--accent-warning);
   white-space: nowrap;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 
 .tip-text {
+  font-size: 12px;
+  line-height: 1.5;
+  color: #F8F8F2;
+  opacity: 0.95;
+  font-weight: 500;
   font-size: 0.6875rem;
   line-height: 1.5;
   color: var(--text-secondary);
