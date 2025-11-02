@@ -128,3 +128,18 @@ This builds the app and pushes it to the `gh-pages` branch.
 - `@react-three/postprocessing` + `postprocessing`
 - Leva control panels
 - Custom GLSL shaders for depth displacement and ASCII rendering
+
+## Research & Documentation
+
+This project includes comprehensive research on advanced rendering techniques:
+
+- **[Render Effects Research](RENDER_EFFECTS_RESEARCH.md)** - Comprehensive research on libraries for bitmap effects, scanning effects, TouchDesigner-like depth manipulation, and object segmentation
+- **[Effects Implementation Guide](EFFECTS_IMPLEMENTATION_GUIDE.md)** - Practical code examples and implementation strategies for adding new effects
+- **[Library Comparison](LIBRARY_COMPARISON.md)** - Quick reference comparing recommended libraries with performance metrics and implementation priorities
+
+These documents provide guidance for extending Depth Studio with:
+- Advanced depth texture manipulation
+- Scanline and CRT effects
+- Real-time object segmentation (BodyPix, TensorFlow.js, ml5.js)
+- Custom GLSL shader effects
+- TouchDesigner-style workflows
