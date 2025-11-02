@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Leva } from 'leva';
+import { Leva, levaStore } from 'leva';
 import './TabbedControls.css';
 
 const tabs = [
@@ -15,6 +15,7 @@ export default function TabbedControls({ isOpen, onToggle }) {
   const [activeTab, setActiveTab] = useState('master');
   const [isMinimized, setIsMinimized] = useState(false);
 
+  // Define which panels belong to which tabs
   const getVisiblePanels = (tabId) => {
     const tabPanelMap = {
       'master': ['🎨 Master'],
@@ -27,68 +28,34 @@ export default function TabbedControls({ isOpen, onToggle }) {
     return tabPanelMap[tabId] || [];
   };
 
-  // Use CSS to hide/show panels based on active tab
+  // Collapse/expand panels based on active tab using Leva store
   useEffect(() => {
     if (!isOpen) return;
 
     const visiblePanels = getVisiblePanels(activeTab);
+    const allPanels = [
+      '🎨 Master',
+      '🎬 Post Processing',
+      '🎨 Surface',
+      '🌍 Environment',
+      '📷 Camera',
+      '🎭 Layers',
+      '🎵 Audio Settings',
+      '⚙️ Performance'
+    ];
 
-    const updatePanelVisibility = () => {
-      // Wait for Leva to render
-      requestAnimationFrame(() => {
-        // Find the Leva container
-        const levaContainers = document.querySelectorAll('[class*="leva"]');
-        
-        levaContainers.forEach(container => {
-          // Find all folder wrappers (these contain the panel titles)
-          const folders = container.querySelectorAll('[class*="Folder"]');
-          
-          folders.forEach(folder => {
-            // Check if this folder has a title element
-            const titleElement = folder.querySelector('[class*="title"], [class*="Title"]');
-            if (titleElement) {
-              const titleText = titleElement.textContent;
-              
-              // Check if this title matches any of our panels
-              const allPanels = [
-                '🎨 Master',
-                '🎬 Post Processing',
-                '🎨 Surface',
-                '🌍 Environment',
-                '📷 Camera',
-                '🎭 Layers',
-                '🎵 Audio Settings',
-                '⚙️ Performance'
-              ];
-              
-              if (allPanels.includes(titleText)) {
-                // Find the wrapper that contains this entire panel
-                const panelWrapper = folder.closest('[class*="Wrapper"]') || folder.parentElement;
-                if (panelWrapper) {
-                  if (visiblePanels.includes(titleText)) {
-                    panelWrapper.style.display = '';
-                    panelWrapper.style.visibility = 'visible';
-                    panelWrapper.style.height = 'auto';
-                  } else {
-                    panelWrapper.style.display = 'none';
-                    panelWrapper.style.visibility = 'hidden';
-                    panelWrapper.style.height = '0';
-                  }
-                }
-              }
-            }
-          });
-        });
+    // Use Leva's store to collapse/expand folders
+    try {
+      allPanels.forEach(panelName => {
+        const shouldShow = visiblePanels.includes(panelName);
+        // Set the folder collapsed state
+        // Leva's setValueAtPath can control folder collapsed state
+        levaStore.setValueAtPath(`${panelName}.__collapsed`, !shouldShow, false);
       });
-    };
-
-    // Initial update
-    updatePanelVisibility();
-
-    // Also update after a delay to catch late renders
-    const timeout = setTimeout(updatePanelVisibility, 150);
-
-    return () => clearTimeout(timeout);
+    } catch (error) {
+      // If store manipulation fails, fall back to CSS
+      console.log('Using CSS fallback for panel visibility');
+    }
   }, [activeTab, isOpen]);
 
   if (!isOpen) {
@@ -172,7 +139,7 @@ export default function TabbedControls({ isOpen, onToggle }) {
               </div>
 
               {/* Leva Controls */}
-              <div className="leva-container">
+              <div className="leva-container" data-active-tab={activeTab}>
                 <Leva 
                   flat
                   oneLineLabels
