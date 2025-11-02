@@ -15,8 +15,7 @@ function Rig({ children, parallax = 0.15, orbit = true, zOffset = 0, orbitSpeed 
   const group = useRef()
   const t = useRef(0)
   const { camera, pointer, controls } = useThree()
-  const lastInteractionTime = useRef(0)
-  const interactionCooldown = 2000 // 2 seconds after user stops interacting
+  const userHasInteracted = useRef(false)
   const lastCameraPos = useRef(new THREE.Vector3())
   const lastCameraRot = useRef(new THREE.Euler())
 
@@ -39,17 +38,18 @@ function Rig({ children, parallax = 0.15, orbit = true, zOffset = 0, orbitSpeed 
     // Check if controls exist and are being used
     const controlsActive = controls && (posChanged || rotChanged)
     
+    // Once user has interacted, mark it permanently (until orbit is toggled off and on again)
     if (controlsActive) {
-      lastInteractionTime.current = Date.now()
+      userHasInteracted.current = true
     }
     
     lastCameraPos.current.copy(currentPos)
     lastCameraRot.current.copy(currentRot)
 
-    const timeSinceInteraction = Date.now() - lastInteractionTime.current
-    const shouldAutoOrbit = orbit && timeSinceInteraction > interactionCooldown
+    // Only auto-orbit if orbit is enabled AND user hasn't manually moved the camera
+    const shouldAutoOrbit = orbit && !userHasInteracted.current
 
-    // Only auto-orbit if enough time has passed since last manual interaction
+    // Only auto-orbit if allowed
     if (shouldAutoOrbit) {
       // Apply camera preset if available
       const preset = CAMERA_PRESETS[cameraMode]
@@ -67,6 +67,13 @@ function Rig({ children, parallax = 0.15, orbit = true, zOffset = 0, orbitSpeed 
       }
     }
   })
+
+  // Reset interaction flag when orbit setting changes
+  useEffect(() => {
+    if (!orbit) {
+      userHasInteracted.current = false
+    }
+  }, [orbit])
 
   return <group ref={group}>{children}</group>
 }

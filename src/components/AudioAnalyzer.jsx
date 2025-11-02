@@ -167,8 +167,14 @@ export default function AudioAnalyzer({ onUpdate, onAudioData }) {
     const analyser = analyserRef.current
   const freqData = new Uint8Array(analyser.frequencyBinCount)
   const timeData = new Uint8Array(analyser.fftSize)
+    
+    // Frame skipping for performance optimization
+    let frameCount = 0
+    const CANVAS_DRAW_INTERVAL = 2 // Only draw canvas every N frames
 
     function loop() {
+      frameCount++
+      
       analyser.getByteFrequencyData(freqData)
       analyser.getByteTimeDomainData(timeData)
 
@@ -350,30 +356,33 @@ export default function AudioAnalyzer({ onUpdate, onAudioData }) {
       }
 
       // draw a compact frequency bar visualizer when a canvas is available
-      try {
-        const canvas = canvasRef.current
-        if (canvas) {
-          const ctx = canvas.getContext('2d')
-          const w = canvas.width
-          const h = canvas.height
-          ctx.clearRect(0, 0, w, h)
-          // compress spectrum into N bars
-          const bars = 48
-          const binSize = Math.floor(freqData.length / bars)
-          for (let i = 0; i < bars; i++) {
-            let s = 0
-            const start = i * binSize
-            for (let j = 0; j < binSize; j++) s += freqData[start + j] || 0
-            const avg = s / (binSize || 1)
-            const norm = avg / 255
-            const bw = Math.max(1, Math.floor(w / bars))
-            const bh = Math.max(1, Math.floor(norm * h))
-            ctx.fillStyle = `hsl(${i / bars * 360}, 80%, ${20 + norm * 50}%)`
-            ctx.fillRect(i * bw, h - bh, bw - 1, bh)
+      // Only draw every N frames to reduce performance impact
+      if (frameCount % CANVAS_DRAW_INTERVAL === 0) {
+        try {
+          const canvas = canvasRef.current
+          if (canvas) {
+            const ctx = canvas.getContext('2d')
+            const w = canvas.width
+            const h = canvas.height
+            ctx.clearRect(0, 0, w, h)
+            // compress spectrum into N bars
+            const bars = 48
+            const binSize = Math.floor(freqData.length / bars)
+            for (let i = 0; i < bars; i++) {
+              let s = 0
+              const start = i * binSize
+              for (let j = 0; j < binSize; j++) s += freqData[start + j] || 0
+              const avg = s / (binSize || 1)
+              const norm = avg / 255
+              const bw = Math.max(1, Math.floor(w / bars))
+              const bh = Math.max(1, Math.floor(norm * h))
+              ctx.fillStyle = `hsl(${i / bars * 360}, 80%, ${20 + norm * 50}%)`
+              ctx.fillRect(i * bw, h - bh, bw - 1, bh)
+            }
           }
+        } catch (e) {
+          // drawing should never throw, but guard in case
         }
-      } catch (e) {
-        // drawing should never throw, but guard in case
       }
 
       rafRef.current = requestAnimationFrame(loop)

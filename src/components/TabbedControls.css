@@ -1,0 +1,423 @@
+/* Tabbed Controls Container */
+.tabbed-controls {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  width: 400px;
+  max-height: calc(100vh - 40px);
+  background: linear-gradient(
+    135deg,
+    rgba(11, 13, 18, 0.95) 0%,
+    rgba(20, 23, 30, 0.95) 100%
+  );
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 16px;
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(98, 114, 164, 0.2);
+  overflow: hidden;
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: slideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(50px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+.tabbed-controls.minimized {
+  max-height: 60px;
+}
+
+/* Toggle Button */
+.controls-toggle-button {
+  position: fixed;
+  right: 20px;
+  padding: 14px 16px;
+  background: linear-gradient(
+    135deg,
+    rgba(98, 114, 164, 0.3) 0%,
+    rgba(80, 250, 123, 0.2) 100%
+  );
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  color: #F8F8F2;
+  font-size: 20px;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  z-index: 1001;
+  transition: all 0.2s ease;
+  line-height: 1;
+}
+
+.controls-toggle-button.closed {
+  top: 20px;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  }
+  50% {
+    box-shadow: 0 4px 24px rgba(98, 114, 164, 0.6);
+  }
+}
+
+.controls-toggle-button.open {
+  top: 26px;
+  right: 26px;
+  padding: 10px 12px;
+  font-size: 16px;
+  background: rgba(255, 85, 85, 0.3);
+  border-color: rgba(255, 85, 85, 0.4);
+}
+
+.controls-toggle-button:hover {
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 6px 20px rgba(98, 114, 164, 0.5);
+}
+
+.controls-toggle-button:active {
+  transform: translateY(0) scale(0.98);
+}
+
+/* Header */
+.controls-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background: linear-gradient(
+    90deg,
+    rgba(98, 114, 164, 0.15) 0%,
+    rgba(80, 250, 123, 0.1) 100%
+  );
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.controls-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #F8F8F2;
+  letter-spacing: 0.5px;
+}
+
+.controls-icon {
+  font-size: 22px;
+  animation: rotate 3s linear infinite;
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.minimize-button {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: #F8F8F2;
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s ease;
+}
+
+.minimize-button:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: scale(1.05);
+}
+
+/* Tab Navigation */
+.tab-navigation {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.2);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.tab-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 12px 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  color: #8BE9FD;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.tab-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(98, 114, 164, 0.2) 0%,
+    rgba(80, 250, 123, 0.2) 100%
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.tab-button:hover::before {
+  opacity: 1;
+}
+
+.tab-button:hover {
+  transform: translateY(-2px);
+  border-color: rgba(139, 233, 253, 0.4);
+  box-shadow: 0 4px 12px rgba(139, 233, 253, 0.2);
+}
+
+.tab-button.active {
+  background: linear-gradient(
+    135deg,
+    rgba(98, 114, 164, 0.4) 0%,
+    rgba(80, 250, 123, 0.3) 100%
+  );
+  border-color: rgba(80, 250, 123, 0.5);
+  color: #50FA7B;
+  box-shadow: 
+    0 4px 16px rgba(80, 250, 123, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+.tab-button.active::before {
+  opacity: 0;
+}
+
+.tab-icon {
+  font-size: 20px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+.tab-label {
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  line-height: 1;
+}
+
+/* Tab Content */
+.tab-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tab-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.tab-content::-webkit-scrollbar-track {
+  background: rgba(68, 71, 90, 0.2);
+  border-radius: 10px;
+}
+
+.tab-content::-webkit-scrollbar-thumb {
+  background: rgba(98, 114, 164, 0.5);
+  border-radius: 10px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+.tab-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(98, 114, 164, 0.7);
+  background-clip: padding-box;
+}
+
+/* Tab Description */
+.tab-description {
+  padding: 12px 16px;
+  background: linear-gradient(
+    135deg,
+    rgba(139, 233, 253, 0.1) 0%,
+    rgba(80, 250, 123, 0.05) 100%
+  );
+  border-left: 3px solid rgba(139, 233, 253, 0.5);
+  border-radius: 8px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #8BE9FD;
+  margin-bottom: 8px;
+}
+
+.tab-description p {
+  margin: 0;
+}
+
+/* Leva Container */
+.leva-container {
+  flex: 1;
+  min-height: 0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.leva-container > div {
+  background: transparent !important;
+}
+
+/* Override Leva styles for better integration */
+.leva-container .leva-c-kWgxhW-bdCRQj-fill-true {
+  width: 100% !important;
+}
+
+.leva-container .leva-c-kWgxhW {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.leva-container .leva-c-kWgxhW-hlqvfM-isRoot-true {
+  padding: 0 !important;
+}
+
+.leva-container .leva-c-gmSzGI {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border-radius: 8px !important;
+  margin-bottom: 8px !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.leva-container .leva-c-gmSzGI-ivdhJu-isRoot-true {
+  border: none !important;
+  background: transparent !important;
+  margin: 0 !important;
+}
+
+.leva-container input[type="range"] {
+  cursor: pointer !important;
+}
+
+.leva-container button {
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+
+.leva-container button:hover {
+  transform: scale(1.02) !important;
+}
+
+/* Quick Tips */
+.quick-tips {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 12px 14px;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 184, 108, 0.15) 0%,
+    rgba(255, 121, 198, 0.1) 100%
+  );
+  border-radius: 8px;
+  border: 1px solid rgba(255, 184, 108, 0.3);
+  margin-top: auto;
+  animation: fadeInUp 0.4s ease;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.tip-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #FFB86C;
+  white-space: nowrap;
+}
+
+.tip-text {
+  font-size: 11px;
+  line-height: 1.4;
+  color: #F8F8F2;
+  opacity: 0.9;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .tabbed-controls {
+    width: calc(100vw - 40px);
+    max-width: 400px;
+  }
+
+  .tab-navigation {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .tab-button {
+    font-size: 10px;
+    padding: 10px 6px;
+  }
+
+  .tab-icon {
+    font-size: 18px;
+  }
+}
+
+@media (max-width: 480px) {
+  .tabbed-controls {
+    top: 10px;
+    right: 10px;
+    width: calc(100vw - 20px);
+  }
+
+  .controls-toggle-button.closed {
+    top: 10px;
+    right: 10px;
+  }
+
+  .tab-content {
+    padding: 12px;
+  }
+}
+
+/* Smooth Transitions */
+* {
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
