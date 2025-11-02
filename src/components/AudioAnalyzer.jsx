@@ -167,8 +167,14 @@ export default function AudioAnalyzer({ onUpdate, onAudioData }) {
     const analyser = analyserRef.current
   const freqData = new Uint8Array(analyser.frequencyBinCount)
   const timeData = new Uint8Array(analyser.fftSize)
+    
+    // Frame skipping for performance optimization
+    let frameCount = 0
+    const CANVAS_DRAW_INTERVAL = 2 // Only draw canvas every N frames
 
     function loop() {
+      frameCount++
+      
       analyser.getByteFrequencyData(freqData)
       analyser.getByteTimeDomainData(timeData)
 
@@ -350,30 +356,33 @@ export default function AudioAnalyzer({ onUpdate, onAudioData }) {
       }
 
       // draw a compact frequency bar visualizer when a canvas is available
-      try {
-        const canvas = canvasRef.current
-        if (canvas) {
-          const ctx = canvas.getContext('2d')
-          const w = canvas.width
-          const h = canvas.height
-          ctx.clearRect(0, 0, w, h)
-          // compress spectrum into N bars
-          const bars = 48
-          const binSize = Math.floor(freqData.length / bars)
-          for (let i = 0; i < bars; i++) {
-            let s = 0
-            const start = i * binSize
-            for (let j = 0; j < binSize; j++) s += freqData[start + j] || 0
-            const avg = s / (binSize || 1)
-            const norm = avg / 255
-            const bw = Math.max(1, Math.floor(w / bars))
-            const bh = Math.max(1, Math.floor(norm * h))
-            ctx.fillStyle = `hsl(${i / bars * 360}, 80%, ${20 + norm * 50}%)`
-            ctx.fillRect(i * bw, h - bh, bw - 1, bh)
+      // Only draw every N frames to reduce performance impact
+      if (frameCount % CANVAS_DRAW_INTERVAL === 0) {
+        try {
+          const canvas = canvasRef.current
+          if (canvas) {
+            const ctx = canvas.getContext('2d')
+            const w = canvas.width
+            const h = canvas.height
+            ctx.clearRect(0, 0, w, h)
+            // compress spectrum into N bars
+            const bars = 48
+            const binSize = Math.floor(freqData.length / bars)
+            for (let i = 0; i < bars; i++) {
+              let s = 0
+              const start = i * binSize
+              for (let j = 0; j < binSize; j++) s += freqData[start + j] || 0
+              const avg = s / (binSize || 1)
+              const norm = avg / 255
+              const bw = Math.max(1, Math.floor(w / bars))
+              const bh = Math.max(1, Math.floor(norm * h))
+              ctx.fillStyle = `hsl(${i / bars * 360}, 80%, ${20 + norm * 50}%)`
+              ctx.fillRect(i * bw, h - bh, bw - 1, bh)
+            }
           }
+        } catch (e) {
+          // drawing should never throw, but guard in case
         }
-      } catch (e) {
-        // drawing should never throw, but guard in case
       }
 
       rafRef.current = requestAnimationFrame(loop)
@@ -388,49 +397,249 @@ export default function AudioAnalyzer({ onUpdate, onAudioData }) {
   }
 
   return (
-    <div className="audio-analyzer">
-      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-        <label style={{ fontSize: 12 }}>
-          Audio file
-          <input type="file" accept="audio/*" onChange={handleFilePicked} />
-        </label>
+    <div className="audio-analyzer" style={{ 
+      color: '#e0e0e0',
+      fontSize: '13px',
+    }}>
+      {/* Header */}
+      <div style={{
+        fontSize: '16px',
+        fontWeight: '600',
+        marginBottom: '16px',
+        color: '#fff',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
+      }}>
+        🎵 Audio Input
+      </div>
 
+      {/* File Upload Section */}
+      <div style={{ 
+        marginBottom: '12px',
+        padding: '12px',
+        backgroundColor: 'rgba(255, 255, 255, 0.05)',
+        borderRadius: '8px',
+        border: '1px solid rgba(255, 255, 255, 0.1)',
+      }}>
+        <label style={{ 
+          display: 'block',
+          fontSize: '11px',
+          fontWeight: '600',
+          color: '#999',
+          marginBottom: '8px',
+          textTransform: 'uppercase',
+          letterSpacing: '0.5px',
+        }}>
+          Audio File
+        </label>
+        <input 
+          type="file" 
+          accept="audio/*" 
+          onChange={handleFilePicked}
+          style={{
+            width: '100%',
+            fontSize: '12px',
+            padding: '8px',
+            backgroundColor: 'rgba(255, 255, 255, 0.05)',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            borderRadius: '6px',
+            color: '#fff',
+            cursor: 'pointer',
+          }}
+        />
+      </div>
+
+      {/* Control Buttons */}
+      <div style={{ 
+        display: 'flex', 
+        gap: '8px', 
+        marginBottom: '12px',
+      }}>
         <button
           onClick={() => {
             if (mode === 'mic' && running) stopMic()
             else startMic()
             setMode('mic')
           }}
+          style={{
+            flex: 1,
+            padding: '10px 12px',
+            backgroundColor: mode === 'mic' && running ? 'rgba(76, 175, 80, 0.3)' : 'rgba(255, 255, 255, 0.1)',
+            border: `1px solid ${mode === 'mic' && running ? 'rgba(76, 175, 80, 0.6)' : 'rgba(255, 255, 255, 0.2)'}`,
+            borderRadius: '8px',
+            color: '#fff',
+            fontSize: '12px',
+            fontWeight: '600',
+            cursor: 'pointer',
+            transition: 'all 0.2s ease',
+          }}
         >
-          Use mic
+          🎤 {mode === 'mic' && running ? 'Stop Mic' : 'Use Mic'}
         </button>
 
-        <button onClick={() => { if (running) { stop(); stopFile(); stopMic() } else { /* no-op: either file or mic starts via controls */ } }}>
-          Stop
+        <button 
+          onClick={() => { 
+            if (running) { 
+              stop(); 
+              stopFile(); 
+              stopMic() 
+            }
+          }}
+          style={{
+            flex: 1,
+            padding: '10px 12px',
+            backgroundColor: 'rgba(244, 67, 54, 0.2)',
+            border: '1px solid rgba(244, 67, 54, 0.4)',
+            borderRadius: '8px',
+            color: '#f44336',
+            fontSize: '12px',
+            fontWeight: '600',
+            cursor: 'pointer',
+            transition: 'all 0.2s ease',
+          }}
+        >
+          ⏹ Stop
         </button>
       </div>
 
-      <div style={{ display: 'flex', gap: 12, marginTop: 8, alignItems: 'center' }}>
-        <label style={{ fontSize: 12 }}>
-          Sensitivity
-          <input type="range" min="0.1" max="5" step="0.01" value={sensitivity} onChange={(e) => setSensitivity(Number(e.target.value))} />
-        </label>
-        <label style={{ fontSize: 12 }}>
-          Smoothing
-          <input type="range" min="0" max="0.99" step="0.01" value={smoothing} onChange={(e) => { setSmoothing(Number(e.target.value)); if (analyserRef.current) analyserRef.current.smoothingTimeConstant = Number(e.target.value) }} />
-        </label>
-        <div style={{ fontSize: 12 }}>
-          Status: {status} {running ? '•' : '◦'}
-        </div>
+      {/* Status */}
+      <div style={{
+        padding: '8px 12px',
+        backgroundColor: running ? 'rgba(76, 175, 80, 0.15)' : 'rgba(255, 255, 255, 0.05)',
+        border: `1px solid ${running ? 'rgba(76, 175, 80, 0.3)' : 'rgba(255, 255, 255, 0.1)'}`,
+        borderRadius: '6px',
+        fontSize: '11px',
+        color: running ? '#4caf50' : '#999',
+        marginBottom: '12px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+      }}>
+        <span>Status: {status}</span>
+        <span style={{ 
+          fontSize: '16px',
+          animation: running ? 'pulse 1.5s ease-in-out infinite' : 'none',
+        }}>
+          {running ? '●' : '○'}
+        </span>
       </div>
-      <div style={{ display: 'flex', gap: 12, marginTop: 8, alignItems: 'center' }}>
-        <label style={{ fontSize: 12 }}>
-          <input type="checkbox" checked={rawFftEnabled} onChange={(e) => setRawFftEnabled(e.target.checked)} />
-          Copy raw FFT into bus
+
+      {/* Sensitivity and Smoothing Sliders */}
+      <div style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '10px',
+        marginBottom: '12px',
+      }}>
+        <label style={{ 
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '6px',
+        }}>
+          <div style={{
+            fontSize: '11px',
+            fontWeight: '600',
+            color: '#999',
+            textTransform: 'uppercase',
+            letterSpacing: '0.5px',
+            display: 'flex',
+            justifyContent: 'space-between',
+          }}>
+            <span>Sensitivity</span>
+            <span style={{ color: '#fff' }}>{sensitivity.toFixed(2)}</span>
+          </div>
+          <input 
+            type="range" 
+            min="0.1" 
+            max="5" 
+            step="0.01" 
+            value={sensitivity} 
+            onChange={(e) => setSensitivity(Number(e.target.value))}
+            style={{
+              width: '100%',
+              accentColor: '#6272a4',
+            }}
+          />
+        </label>
+
+        <label style={{ 
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '6px',
+        }}>
+          <div style={{
+            fontSize: '11px',
+            fontWeight: '600',
+            color: '#999',
+            textTransform: 'uppercase',
+            letterSpacing: '0.5px',
+            display: 'flex',
+            justifyContent: 'space-between',
+          }}>
+            <span>Smoothing</span>
+            <span style={{ color: '#fff' }}>{smoothing.toFixed(2)}</span>
+          </div>
+          <input 
+            type="range" 
+            min="0" 
+            max="0.99" 
+            step="0.01" 
+            value={smoothing} 
+            onChange={(e) => { 
+              setSmoothing(Number(e.target.value)); 
+              if (analyserRef.current) {
+                analyserRef.current.smoothingTimeConstant = Number(e.target.value)
+              }
+            }}
+            style={{
+              width: '100%',
+              accentColor: '#6272a4',
+            }}
+          />
         </label>
       </div>
-      <div style={{ marginTop: 8 }}>
-        <canvas ref={canvasRef} width={240} height={48} style={{ width: 240, height: 48, background: '#05060a', borderRadius: 4 }} />
+
+      {/* FFT Checkbox */}
+      <div style={{
+        marginBottom: '12px',
+      }}>
+        <label style={{ 
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          fontSize: '12px',
+          cursor: 'pointer',
+        }}>
+          <input 
+            type="checkbox" 
+            checked={rawFftEnabled} 
+            onChange={(e) => setRawFftEnabled(e.target.checked)}
+            style={{
+              accentColor: '#6272a4',
+            }}
+          />
+          <span>Copy raw FFT into bus</span>
+        </label>
+      </div>
+
+      {/* Visualizer Canvas */}
+      <div style={{
+        borderRadius: '8px',
+        overflow: 'hidden',
+        border: '1px solid rgba(255, 255, 255, 0.1)',
+      }}>
+        <canvas 
+          ref={canvasRef} 
+          width={240} 
+          height={48} 
+          style={{ 
+            width: '100%', 
+            height: '48px', 
+            background: '#05060a',
+            display: 'block',
+          }} 
+        />
       </div>
     </div>
   )

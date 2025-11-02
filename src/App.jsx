@@ -1,8 +1,8 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { Leva } from 'leva';
 import Scene from './components/Scene';
 import AudioAnalyzer from './components/AudioAnalyzer';
+import TabbedControls from './components/TabbedControls';
 import './App.css';
 import {
   AnimatedDropZone,
@@ -31,6 +31,8 @@ export default function App() {
   const [fps, setFps] = useState(60)
   const [isRecording, setIsRecording] = useState(false)
   const [recordDuration, setRecordDuration] = useState(0)
+  const [audioControlsVisible, setAudioControlsVisible] = useState(true)
+  const [controlsOpen, setControlsOpen] = useState(true)
   const colorRef = useRef(null)
   const depthRef = useRef(null)
   const sceneRef = useRef(null)
@@ -111,6 +113,77 @@ export default function App() {
 
   const showToast = (message, type = 'info') => {
     setToast({ message, type, visible: true })
+  }
+
+  // Compress image to reduce memory usage and improve performance
+  const compressImage = (file, maxSize = 2048, quality = 0.85) => {
+    return new Promise((resolve, reject) => {
+      // Skip compression for very small files (< 500KB)
+      if (file.size < 500 * 1024) {
+        resolve(file)
+        return
+      }
+      
+      const reader = new FileReader()
+      
+      reader.onload = (e) => {
+        const img = new Image()
+        
+        img.onload = () => {
+          // Calculate new dimensions while maintaining aspect ratio
+          let width = img.width
+          let height = img.height
+          
+          // Skip compression if image is already small enough
+          if (width <= maxSize && height <= maxSize && file.size < 2 * 1024 * 1024) {
+            resolve(file)
+            return
+          }
+          
+          if (width > maxSize || height > maxSize) {
+            if (width > height) {
+              height = (height / width) * maxSize
+              width = maxSize
+            } else {
+              width = (width / height) * maxSize
+              height = maxSize
+            }
+          }
+          
+          // Create canvas and draw resized image
+          const canvas = document.createElement('canvas')
+          canvas.width = width
+          canvas.height = height
+          const ctx = canvas.getContext('2d')
+          
+          // Use better image smoothing
+          ctx.imageSmoothingEnabled = true
+          ctx.imageSmoothingQuality = 'high'
+          
+          ctx.drawImage(img, 0, 0, width, height)
+          
+          // Convert to blob
+          canvas.toBlob(
+            (blob) => {
+              if (blob) {
+                // Only use compressed version if it's actually smaller
+                resolve(blob.size < file.size ? blob : file)
+              } else {
+                reject(new Error('Canvas to Blob conversion failed'))
+              }
+            },
+            'image/jpeg',
+            quality
+          )
+        }
+        
+        img.onerror = () => reject(new Error('Image load failed'))
+        img.src = e.target.result
+      }
+      
+      reader.onerror = () => reject(new Error('File read failed'))
+      reader.readAsDataURL(file)
+    })
   }
 
   const savePreset = () => {
@@ -284,16 +357,77 @@ export default function App() {
     // If called from event, extract file
     const f = file.target ? file.target.files?.[0] : file
     if (!f) return
-    setColorURL(URL.createObjectURL(f))
-    showToast('Color image loaded', 'success')
+    
+    showToast('Compressing color image...', 'info')
+    
+    // Compress image before loading (max 2048px, 85% quality)
+    compressImage(f, 2048, 0.85).then(compressedBlob => {
+      const originalSize = (f.size / 1024 / 1024).toFixed(2)
+      const compressedSize = (compressedBlob.size / 1024 / 1024).toFixed(2)
+      const savings = ((1 - compressedBlob.size / f.size) * 100).toFixed(0)
+      
+      setColorURL(URL.createObjectURL(compressedBlob))
+      showToast(`Color image loaded (${originalSize}MB → ${compressedSize}MB, ${savings}% smaller)`, 'success')
+    }).catch(err => {
+      console.error('Image compression failed, using original:', err)
+      setColorURL(URL.createObjectURL(f))
+      showToast('Color image loaded (compression skipped)', 'success')
+    })
   }
 
   const onDepthFile = (file) => {
     if (!file) return
     const f = file.target ? file.target.files?.[0] : file
     if (!f) return
-    setDepthURL(URL.createObjectURL(f))
-    showToast('Depth map loaded', 'success')
+    
+    showToast('Compressing depth map...', 'info')
+    
+    // Compress depth map (max 2048px, 90% quality - higher for depth accuracy)
+    compressImage(f, 2048, 0.9).then(compressedBlob => {
+      const originalSize = (f.size / 1024 / 1024).toFixed(2)
+      const compressedSize = (compressedBlob.size / 1024 / 1024).toFixed(2)
+      const savings = ((1 - compressedBlob.size / f.size) * 100).toFixed(0)
+      
+      setDepthURL(URL.createObjectURL(compressedBlob))
+      showToast(`Depth map loaded (${originalSize}MB → ${compressedSize}MB, ${savings}% smaller)`, 'success')
+    }).catch(err => {
+      console.error('Image compression failed, using original:', err)
+      setDepthURL(URL.createObjectURL(f))
+      showToast('Depth map loaded (compression skipped)', 'success')
+    })
+  }
+
+  // Load example images
+  const loadExampleImages = (name) => {
+    const basePath = '/depthstudio/image_examples/'
+    const colorPath = `${basePath}${name}_colour.png`
+    const depthPath = `${basePath}${name}_depth.png`
+    
+    // Load color image
+    fetch(colorPath)
+      .then(res => res.blob())
+      .then(blob => {
+        const file = new File([blob], `${name}_colour.png`, { type: 'image/png' })
+        onColorFile(file)
+      })
+      .catch(err => {
+        console.error('Failed to load example color image:', err)
+        showToast('Failed to load example image', 'error')
+      })
+    
+    // Load depth image
+    fetch(depthPath)
+      .then(res => res.blob())
+      .then(blob => {
+        const file = new File([blob], `${name}_depth.png`, { type: 'image/png' })
+        onDepthFile(file)
+      })
+      .catch(err => {
+        console.error('Failed to load example depth image:', err)
+        showToast('Failed to load example depth map', 'error')
+      })
+    
+    showToast(`Loading ${name} example...`, 'info')
   }
 
   return (
@@ -346,6 +480,88 @@ export default function App() {
         left="20px"
         inputId="depth-file-input"
       />
+
+      {/* Example images quick selector */}
+      <div style={{
+        position: 'fixed',
+        top: '200px',
+        left: '20px',
+        zIndex: 1000,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '8px',
+      }}>
+        <div style={{
+          backgroundColor: 'rgba(40, 42, 54, 0.95)',
+          backdropFilter: 'blur(20px)',
+          borderRadius: '12px',
+          padding: '12px',
+          border: '1px solid rgba(98, 114, 164, 0.3)',
+          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)',
+        }}>
+          <div style={{
+            fontSize: '11px',
+            fontWeight: '600',
+            color: '#BD93F9',
+            marginBottom: '8px',
+            textTransform: 'uppercase',
+            letterSpacing: '0.5px',
+          }}>
+            📷 Examples
+          </div>
+          <button
+            onClick={() => loadExampleImages('bunny')}
+            style={{
+              width: '100%',
+              padding: '8px 12px',
+              backgroundColor: 'rgba(98, 114, 164, 0.2)',
+              border: '1px solid rgba(98, 114, 164, 0.4)',
+              borderRadius: '8px',
+              color: '#F8F8F2',
+              fontSize: '13px',
+              fontWeight: '500',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              marginBottom: '6px',
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.backgroundColor = 'rgba(98, 114, 164, 0.4)'
+              e.target.style.transform = 'translateX(2px)'
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.backgroundColor = 'rgba(98, 114, 164, 0.2)'
+              e.target.style.transform = 'translateX(0)'
+            }}
+          >
+            🐰 Bunny
+          </button>
+          <button
+            onClick={() => loadExampleImages('car')}
+            style={{
+              width: '100%',
+              padding: '8px 12px',
+              backgroundColor: 'rgba(98, 114, 164, 0.2)',
+              border: '1px solid rgba(98, 114, 164, 0.4)',
+              borderRadius: '8px',
+              color: '#F8F8F2',
+              fontSize: '13px',
+              fontWeight: '500',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.backgroundColor = 'rgba(98, 114, 164, 0.4)'
+              e.target.style.transform = 'translateX(2px)'
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.backgroundColor = 'rgba(98, 114, 164, 0.2)'
+              e.target.style.transform = 'translateX(0)'
+            }}
+          >
+            🚗 Car
+          </button>
+        </div>
+      </div>
 
       {/* Preset manager panel */}
       {showPresets && (
@@ -524,10 +740,54 @@ export default function App() {
         </button>
       </div>
 
-      {/* Old UI (hidden but keeping AudioAnalyzer) */}
-      <div style={{ display: 'none' }}>
-        <AudioAnalyzer onAudioData={setAudioData} />
+      {/* Audio Controls */}
+      <div style={{
+        position: 'fixed',
+        top: audioControlsVisible ? '20px' : '-500px',
+        left: '20px',
+        zIndex: 999,
+        backgroundColor: 'rgba(11, 13, 18, 0.85)',
+        backdropFilter: 'blur(20px)',
+        borderRadius: '16px',
+        padding: audioControlsVisible ? '20px' : '0',
+        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)',
+        border: '1px solid rgba(255, 255, 255, 0.1)',
+        minWidth: '280px',
+        maxWidth: '320px',
+        transition: 'all 0.3s ease',
+      }}>
+        {audioControlsVisible && <AudioAnalyzer onAudioData={setAudioData} />}
       </div>
+
+      {/* Audio Controls Toggle Button */}
+      <button
+        onClick={() => setAudioControlsVisible(!audioControlsVisible)}
+        style={{
+          position: 'fixed',
+          top: '20px',
+          left: audioControlsVisible ? '340px' : '20px',
+          zIndex: 1000,
+          padding: '12px 16px',
+          backgroundColor: 'rgba(11, 13, 18, 0.85)',
+          backdropFilter: 'blur(20px)',
+          border: '1px solid rgba(255, 255, 255, 0.2)',
+          borderRadius: '12px',
+          color: '#fff',
+          fontSize: '20px',
+          cursor: 'pointer',
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+          transition: 'all 0.3s ease',
+        }}
+        title={audioControlsVisible ? 'Hide Audio Controls' : 'Show Audio Controls'}
+      >
+        {audioControlsVisible ? '🎵' : '🎧'}
+      </button>
+
+      {/* Tabbed Controls */}
+      <TabbedControls 
+        isOpen={controlsOpen}
+        onToggle={() => setControlsOpen(!controlsOpen)}
+      />
 
       <Scene 
         ref={sceneRef}
