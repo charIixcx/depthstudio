@@ -7,9 +7,12 @@ import { useControls, button, folder, levaStore } from 'leva'
 import { BlendFunction, GlitchMode } from 'postprocessing'
 import DepthSurface from './DepthSurface.jsx'
 import ASCIIEffect from './ASCIIEffect.jsx'
+import DepthCapture from './DepthCapture.jsx'
 import audioBus from '../lib/audioBus'
 import { createEffectsController } from '../lib/audioMapper'
 import { CAMERA_PRESETS } from '../lib/presets'
+import { CRTEffect } from '../shaders/CRTEffect.js'
+import { DepthMaskEffect } from '../shaders/DepthMaskEffect.js'
 
 function Rig({ children, parallax = 0.15, orbit = true, zOffset = 0, orbitSpeed = 0.15, cameraMode = 'orbit' }) {
   const group = useRef()
@@ -208,6 +211,30 @@ export default function Scene({ colorURL, depthURL, onAudioData, cameraMode = 'o
       scanlineEnabled: { value: false, label: '📺 Enable' },
       scanlineDensity: { value: 1.5, min: 0.1, max: 4, step: 0.1, label: '📊 Density' }
     }, { collapsed: true }),
+    CRT: folder({
+      crtEnabled: { value: false, label: '📺 Enable CRT' },
+      crtScanlineCount: { value: 800, min: 100, max: 2000, step: 10, label: '📊 Scanlines' },
+      crtScanlineIntensity: { value: 0.3, min: 0, max: 1, step: 0.01, label: '💪 Intensity' },
+      crtScanlineSpeed: { value: 1.0, min: 0, max: 5, step: 0.1, label: '⚡ Speed' },
+      crtScanlineThickness: { value: 2.0, min: 0.5, max: 5, step: 0.1, label: '📏 Thickness' },
+      crtFlicker: { value: 0.1, min: 0, max: 0.5, step: 0.01, label: '💡 Flicker' },
+      crtNoise: { value: 0.05, min: 0, max: 0.3, step: 0.01, label: '📳 Noise' },
+      crtCurvature: { value: 0.0, min: 0, max: 0.3, step: 0.01, label: '🔲 Curvature' },
+      crtVignette: { value: 0.3, min: 0, max: 1, step: 0.01, label: '🎭 Vignette' },
+      crtRgbShift: { value: 0.0, min: 0, max: 0.01, step: 0.0001, label: '🌈 RGB Shift' }
+    }, { collapsed: true }),
+    DepthMask: folder({
+      depthMaskEnabled: { value: false, label: '🌊 Enable Depth Mask' },
+      depthRangeMin: { value: 0.0, min: 0, max: 1, step: 0.01, label: '📉 Range Min' },
+      depthRangeMax: { value: 1.0, min: 0, max: 1, step: 0.01, label: '📈 Range Max' },
+      depthEdgeSoftness: { value: 0.05, min: 0, max: 0.5, step: 0.01, label: '〰️ Softness' },
+      depthInvert: { value: false, label: '🔄 Invert' },
+      depthPower: { value: 1.0, min: 0.1, max: 5, step: 0.1, label: '⚡ Power' },
+      depthTint: { value: '#ffffff', label: '🎨 Tint Color' },
+      depthTintStrength: { value: 0.0, min: 0, max: 1, step: 0.01, label: '💪 Tint Strength' },
+      depthFadeEnabled: { value: false, label: '🌫️ Fade Effect' },
+      depthVisualize: { value: false, label: '👁️ Visualize Depth' }
+    }, { collapsed: true }),
     ASCII: folder({
       asciiMode: { value: false, label: '🔤 Enable' },
       asciiCellSize: { value: 8.0, min: 4, max: 24, step: 1, label: '📐 Cell Size' },
@@ -235,6 +262,10 @@ export default function Scene({ colorURL, depthURL, onAudioData, cameraMode = 'o
     pixelationEnabled, pixelSize,
     dotScreenEnabled, dotScale, dotAngle,
     scanlineEnabled, scanlineDensity,
+    crtEnabled, crtScanlineCount, crtScanlineIntensity, crtScanlineSpeed, 
+    crtScanlineThickness, crtFlicker, crtNoise, crtCurvature, crtVignette, crtRgbShift,
+    depthMaskEnabled, depthRangeMin, depthRangeMax, depthEdgeSoftness, 
+    depthInvert, depthPower, depthTint, depthTintStrength, depthFadeEnabled, depthVisualize,
     asciiMode, asciiCellSize, asciiDepth, 
     asciiContrast, asciiBrightness, asciiColorize, 
     ascii3D, asciiDepthScale, asciiSegments,
@@ -585,6 +616,76 @@ export default function Scene({ colorURL, depthURL, onAudioData, cameraMode = 'o
     glitch: 0
   }))
 
+  // Depth texture state for depth-based effects
+  const [depthTexture, setDepthTexture] = useState(null)
+
+  // Create CRT effect instance
+  const crtEffect = useMemo(() => {
+    return new CRTEffect({
+      scanlineCount: crtScanlineCount,
+      scanlineIntensity: crtScanlineIntensity,
+      scanlineSpeed: crtScanlineSpeed,
+      scanlineThickness: crtScanlineThickness,
+      flickerIntensity: crtFlicker,
+      noiseIntensity: crtNoise,
+      crtCurvature: crtCurvature,
+      crtVignette: crtVignette,
+      rgbShift: crtRgbShift,
+    })
+  }, [])
+
+  // Update CRT effect parameters
+  useEffect(() => {
+    if (crtEffect) {
+      crtEffect.scanlineCount = crtScanlineCount
+      crtEffect.scanlineIntensity = crtScanlineIntensity
+      crtEffect.scanlineSpeed = crtScanlineSpeed
+      crtEffect.scanlineThickness = crtScanlineThickness
+      crtEffect.flickerIntensity = crtFlicker
+      crtEffect.noiseIntensity = crtNoise
+      crtEffect.crtCurvature = crtCurvature
+      crtEffect.crtVignette = crtVignette
+      crtEffect.rgbShift = crtRgbShift
+    }
+  }, [crtEffect, crtScanlineCount, crtScanlineIntensity, crtScanlineSpeed, 
+      crtScanlineThickness, crtFlicker, crtNoise, crtCurvature, crtVignette, crtRgbShift])
+
+  // Create depth mask effect instance
+  const depthMaskEffect = useMemo(() => {
+    return new DepthMaskEffect({
+      depthTexture: null,
+      cameraNear: 0.1,
+      cameraFar: 100,
+      depthMaskRange: [depthRangeMin, depthRangeMax],
+      depthEdgeSoftness: depthEdgeSoftness,
+      depthInvert: depthInvert,
+      depthPower: depthPower,
+      depthTint: new THREE.Color(depthTint),
+      depthTintStrength: depthTintStrength,
+      depthFadeEnabled: depthFadeEnabled,
+      depthVisualize: depthVisualize,
+    })
+  }, [])
+
+  // Update depth mask effect parameters
+  useEffect(() => {
+    if (depthMaskEffect) {
+      depthMaskEffect.depthTexture = depthTexture
+      depthMaskEffect.cameraNear = 0.1
+      depthMaskEffect.cameraFar = 100
+      depthMaskEffect.depthMaskRange = [depthRangeMin, depthRangeMax]
+      depthMaskEffect.depthEdgeSoftness = depthEdgeSoftness
+      depthMaskEffect.depthInvert = depthInvert
+      depthMaskEffect.depthPower = depthPower
+      depthMaskEffect.depthTint = new THREE.Color(depthTint)
+      depthMaskEffect.depthTintStrength = depthTintStrength
+      depthMaskEffect.depthFadeEnabled = depthFadeEnabled
+      depthMaskEffect.depthVisualize = depthVisualize
+    }
+  }, [depthMaskEffect, depthTexture, depthRangeMin, depthRangeMax, 
+      depthEdgeSoftness, depthInvert, depthPower, depthTint, depthTintStrength, 
+      depthFadeEnabled, depthVisualize])
+
   const chromaOffset = useMemo(() => [chroma, 0], [chroma])
 
   // audio controller that centralizes smoothing and beat boosts
@@ -836,6 +937,12 @@ export default function Scene({ colorURL, depthURL, onAudioData, cameraMode = 'o
         maxDistance={10}
       />
 
+      {/* Depth texture capture for depth-based effects */}
+      <DepthCapture 
+        enabled={depthMaskEnabled || depthVisualize} 
+        onDepthUpdate={setDepthTexture} 
+      />
+
       <EffectComposer multisampling={0} frameBufferType={THREE.HalfFloatType} resolutionScale={perf.postScale}>
         {/* Initial/base values are set from the Leva controls. They will be
             updated imperatively in the r3f render loop using audioBus data. */}
@@ -857,6 +964,8 @@ export default function Scene({ colorURL, depthURL, onAudioData, cameraMode = 'o
         {pixelationEnabled && <Pixelation granularity={pixelSize} />}
         {dotScreenEnabled && <DotScreen angle={dotAngle} scale={dotScale} />}
         {scanlineEnabled && <Scanline density={scanlineDensity} />}
+        {crtEnabled && <primitive object={crtEffect} />}
+        {depthMaskEnabled && depthTexture && <primitive object={depthMaskEffect} />}
         {/* If hardware AA is off, apply lightweight SMAA */}
         {perf.smaa && !perf.antialias && <SMAA />}
       </EffectComposer>
